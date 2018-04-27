@@ -89,9 +89,14 @@ var componentName = "wb-feeds",
 		generic: function( data ) {
 			var title = data.title;
 
-			if ( typeof( title ) === "object" && title.content ) {
-				title = title.content;
-			}
+			if (typeof( title ) === "object" ) {
+                if ( title.content ) {
+                    title = title.content;
+                }
+                else if ( title.type === "xhtml" && title.div ) {
+                    title = title.div.content;
+                }
+            }
 			return "<li><a href='" + data.link + "'>" + title + "</a><br />" +
 				( data.publishedDate !== "" ? " <small class='feeds-date'><time>" +
 				wb.date.toDateISO( data.publishedDate, true ) + "</time></small>" : "" ) + "</li>";
