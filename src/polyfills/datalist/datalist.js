@@ -90,7 +90,7 @@ var componentName = "wb-datalist",
 				if ( value.length === 0 ) {
 					value = $this.find( "span.al-lbl" ).html();
 				}
-				return ( comparator.length === 0 || value.toLowerCase().indexOf( comparator ) !== -1 );
+				return ( comparator.length === 0 || value.toLowerCase().indexOf( comparator ) === 0 );
 			} );
 		}
 
@@ -187,7 +187,7 @@ var componentName = "wb-datalist",
 			} else if ( !autolistHidden ) {
 
 				// Tab or Escape key
-				if ( ( which === 9 || which === 27 ) || ( which === 27 && !event.altKey ) ) {
+				if ( ( which === 9 || which === 27 ) || ( which === 27 && !event.altKey ) ) {
 					closeOptions( input );
 				}
 			}

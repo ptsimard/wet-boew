@@ -6,7 +6,7 @@
 	"categoryfile": "plugins",
 	"description": "Provides an accessible multimedia player for embedding video and audio into web pages.",
 	"altLangPrefix": "multimedia",
-	"dateModified": "2014-08-04"
+	"dateModified": "2018-04-18"
 }
 ---
 <span class="wb-prettify all-pre hide"></span>
@@ -60,7 +60,7 @@
 	&lt;p&gt;Looking for a Job&lt;/p&gt;
 &lt;/figcaption&gt;</code></pre>
 					<pre><code>&lt;figcaption&gt;
-	&lt;p&gt;Looking for a Job (&lt;a href="http://www.servicecanada.gc.ca/eng/video/lj.shtml"&gt;Transcript&lt;/a&gt;)&lt;/p&gt;
+	&lt;p&gt;Looking for a Job (&lt;a href="cpts-lg-en.html"&gt;Transcript&lt;/a&gt;)&lt;/p&gt;
 &lt;/figcaption&gt;</code></pre>
 					<pre><code>&lt;figcaption&gt;
 	&lt;details id="inline-captions"&gt;
@@ -113,15 +113,15 @@
 
 			<section>
 				<h5>Code</h5>
-				<pre><code>&lt;figure class="wb-mltmd" data-wb-mltmd='{"shareUrl": "http://youtu.be/p2-1ZIHu1W0"}'&gt;
-	&lt;video poster="http://www.servicecanada.gc.ca/eng/video/images/te-lj-eng.jpg" title="Looking for a Job"&gt;
+				<pre><code>&lt;figure class="wb-mltmd" data-wb-mltmd='{"shareUrl": "https://wet-boew.github.io/v4.0-ci/demos/multimedia/multimedia-en.html"}'&gt;
+	&lt;video poster="demo/video1-en.jpg" title="Looking for a Job"&gt;
 		&lt;source type="video/webm" src="http://video2.servicecanada.gc.ca/video/boew-wet/te-lj-eng.webm" /&gt;
 		&lt;source type="video/mp4" src="http://video2.servicecanada.gc.ca/video/boew-wet/te-lj-eng.mp4" /&gt;
 		&lt;track src="cpts-lg-en.html" kind="captions" data-type="text/html" srclang="en" label="English" /&gt;
 	&lt;/video&gt;
 	&lt;button class="btn btn-info cuepoint" data-cuepoint="75s"&gt;Cue point - 75s&lt;/button&gt;
 	&lt;figcaption&gt;
-		&lt;p&gt;Looking for a Job (&lt;a href="http://www.servicecanada.gc.ca/eng/video/lj.shtml"&gt;Transcript&lt;/a&gt;)&lt;/p&gt;
+		&lt;p&gt;Looking for a Job (&lt;a href="cpts-lg-en.html"&gt;Transcript&lt;/a&gt;)&lt;/p&gt;
 	&lt;/figcaption&gt;
 &lt;/figure&gt;</code></pre>
 			</section>
@@ -131,8 +131,11 @@
 			<h4>Video (YouTube)</h4>
 			<ol>
 				<li>Add a <code>title</code> attribute to the <code>video</code> element with the value being the title of the video.</li>
-				<li>Add a <code>source</code> element to the <code>video</code> element with <code>type="video/youtube"</code> and the <code>src</code> attribute being the URL of the video.
+				<li>
+					<p>Add a <code>source</code> element to the <code>video</code> element with <code>type="video/youtube"</code> and the <code>src</code> attribute being the URL of the video.</p>
 					<pre><code>&lt;source type="video/youtube" src="http://www.youtube.com/watch?v=9znKJqnFuuY" /&gt;</code></pre>
+					<p>or</p>
+					<pre><code>&lt;source type="video/youtube" src="https://youtu.be/9znKJqnFuuY" /&gt;</code></pre>
 				</li>
 				<li>If captions are not already included for the video, add the captions using the tools provided by YouTube.</li>
 			</ol>
@@ -234,7 +237,7 @@
 			<tr>
 				<td><code>wb-ready.wb</code> (v4.0.5+)</td>
 				<td>Triggered automatically when WET has finished loading and executing.</td>
-				<td>Used to identify when all WET plugins and polyfills have finished loading and executing. 
+				<td>Used to identify when all WET plugins and polyfills have finished loading and executing.
 					<pre><code>$( document ).on( "wb-ready.wb", function( event ) {
 });</code></pre>
 				</td>

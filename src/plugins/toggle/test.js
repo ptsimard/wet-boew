@@ -101,10 +101,10 @@ describe( "Toggle test suite", function() {
 			var ariaControls = "",
 				selector = $toggleOthers.data( "toggle" ).selector;
 
-				$( selector ).each( function() {
-					ariaControls += this.id + " ";
-				} );
-				expect( $toggleOthers.attr( "aria-controls" ) ).to.equal( $.trim( ariaControls ) );
+			$( selector ).each( function() {
+				ariaControls += this.id + " ";
+			} );
+			expect( $toggleOthers.attr( "aria-controls" ) ).to.equal( $.trim( ariaControls ) );
 		} );
 
 		it( "should have aria tablist attributes if a tablist", function() {
@@ -347,27 +347,13 @@ describe( "Toggle test suite", function() {
 		it( "should open details element", function() {
 			$toggler.trigger( "click" );
 			expect( $details.hasClass( "on" ) ).to.equal( true );
-
-			// Test must account for browser with and without details element native support
-			if ( Modernizr.details ) {
-				expect( $details.prop( "open" ) ).to.equal( true );
-			} else {
-				expect( $details.attr( "open" ) ).to.equal( "open" );
-				expect( spy.calledWith( "toggle.wb-details" ) ).to.equal( true );
-			}
+			expect( $details.prop( "open" ) ).to.equal( true );
 		} );
 
 		it( "should close details element", function() {
 			$toggler.trigger( "click" );
 			expect( $details.hasClass( "off" ) ).to.equal( true );
-
-			// Test must account for browser with and without details element native support
-			if ( Modernizr.details ) {
-				expect( $details.prop( "open" ) ).to.equal( false );
-			} else {
-				expect( $details.attr( "open" ) ).to.equal( undefined );
-				expect( spy.calledWith( "toggle.wb-details" ) ).to.equal( true );
-			}
+			expect( $details.prop( "open" ) ).to.equal( false );
 		} );
 	} );
 
@@ -406,6 +392,10 @@ describe( "Toggle test suite", function() {
 			$panels = $accordion.find( ".tgl-panel" );
 			$tabs = $accordion.find( ".tgl-tab" )
 				.trigger( "wb-init.wb-toggle" );
+
+			if ( !Modernizr.details ) {
+				$tabs.trigger( "wb-init.wb-details" );
+			}
 		} );
 
 		after( function() {

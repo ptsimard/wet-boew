@@ -29,32 +29,6 @@ var componentName = "wb-feeds",
 	Templates = {
 
 		/**
-		 * [facebook template]
-		 * @param  {entry object} data
-		 * @return {string}	HTML string of formatted using Media Object (twitter bootstrap)
-		 */
-		facebook: function( data ) {
-
-			// Facebook feeds does not really do titles in ATOM RSS. It simply truncates content at 150 characters. We are using a JS based sentence
-			// detection algorithm to better split content and titles
-			var content = fromCharCode( data.content ),
-				title = content.replace( /(<([^>]+)>)/ig, "" ).match( /\(?[^\.\?\!]+[\.!\?]\)?/g ),
-				author = data.author.replace( /&amp;/g, "&" );
-
-			// Sanitize the HTML from Facebook - extra 'br' tags
-			content = content.replace( /(<br>\n?)+/gi, "<br />" );
-
-			return "<li class='media'><a class='pull-left' href=''><img src='" +
-				data.fIcon + "' alt='" + author +
-				"' height='64px' width='64px' class='media-object'/></a><div class='media-body'>" +
-				"<h4 class='media-heading'><a href='" + data.link + "'><span class='wb-inv'>" +
-				title[ 0 ] + " - </span>" + author + "</a><br />" +
-				( data.publishedDate !== "" ? " <small class='feeds-date text-right'><time>" +
-				wb.date.toDateISO( data.publishedDate, true ) + "</time></small>" : "" ) +
-				"</h4><p>" + content + "</p></div></li>";
-		},
-
-		/**
 		 * [fickr template]
 		 * @param  {entry object} data
 		 * @return {string}	HTML string for creating a photowall effect
@@ -69,7 +43,10 @@ var componentName = "wb-feeds",
 				};
 
 			// due to CORS we cannot default to simple ajax pulls of the image. We have to inline the content box
-			return "<li><a class='feed-flickr' href='javascript:;' data-flickr='" + JSON.stringify( flickrData ) + "'><img src='" + flickrData.thumbnail + "' alt='" + flickrData.title + "' title='" + flickrData.title + "' class='img-responsive'/></a></li>";
+			return "<li><a class='feed-flickr' href='javascript:;' data-flickr='" +
+                wb.escapeAttribute( JSON.stringify( flickrData ) ) + "'><img src='" + flickrData.thumbnail + "' alt='" +
+                wb.escapeAttribute( flickrData.title ) + "' title='" + wb.escapeAttribute( flickrData.title ) +
+                "' class='img-responsive'/></a></li>";
 		},
 
 		/**
@@ -84,27 +61,38 @@ var componentName = "wb-feeds",
 			};
 
 			// Due to CORS we cannot default to simple ajax pulls of the image. We have to inline the content box
-			return "<li class='col-md-4 col-sm-6 feed-youtube' data-youtube='" + JSON.stringify( youtubeDate ) + "'><a href='javascript:;'><img src='http://img.youtube.com/vi/" + youtubeDate.videoId + "/mqdefault.jpg' alt='" + youtubeDate.title + "' title='" + youtubeDate.title + "' class='img-responsive' /></a></li>";
+			return "<li class='col-md-4 col-sm-6 feed-youtube' data-youtube='" +
+                wb.escapeAttribute( JSON.stringify( youtubeDate ) ) + "'><a href='javascript:;'><img src='" +
+                wb.pageUrlParts.protocol + "//img.youtube.com/vi/" + youtubeDate.videoId + "/mqdefault.jpg' alt='" +
+                wb.escapeAttribute( youtubeDate.title ) + "' title='" + wb.escapeAttribute( youtubeDate.title ) +
+                "' class='img-responsive' /></a></li>";
 		},
+
 		/**
 		 * [pinterest template]
 		 * @param  {entry object}    data
 		 * @return {string}    HTML string of formatted using a simple list / anchor view
 		 */
 		pinterest: function( data ) {
-			var content = fromCharCode( data.content ).replace( /<a href="\/pin[^"]*"><img ([^>]*)><\/a>([^<]*)(<a .*)?/, "<a href='" + data.link + "'><img alt='' class='center-block' $1><br/>$2</a>$3" );
+			var content = fromCharCode( data.description ).replace( /<a href="\/pin[^"]*"><img ([^>]*)><\/a>([^<]*)(<a .*)?/, "<a href='" +
+                data.link + "'><img alt='' class='center-block' $1><br/>$2</a>$3" );
 			return "<li class='media'>" + content +
 			( data.publishedDate !== "" ? " <small class='small feeds-date'><time>" +
 			wb.date.toDateISO( data.publishedDate, true ) + "</time></small>" : "" ) + "</li>";
 		},
+
 		/**
 		 * [generic template]
 		 * @param  {entry object}	data
 		 * @return {string}	HTML string of formatted using a simple list / anchor view
 		 */
 		generic: function( data ) {
+			var title = data.title;
 
-			return "<li><a href='" + data.link + "'>" + data.title + "</a><br />" +
+			if ( typeof( title ) === "object" && title.content ) {
+				title = title.content;
+			}
+			return "<li><a href='" + data.link + "'>" + title + "</a><br />" +
 				( data.publishedDate !== "" ? " <small class='feeds-date'><time>" +
 				wb.date.toDateISO( data.publishedDate, true ) + "</time></small>" : "" ) + "</li>";
 		}
@@ -147,20 +135,16 @@ var componentName = "wb-feeds",
 
 	/**
 	 * Helper function that builds the URL for the JSON request
+	 * Feeds well now use developer.yahoo.com/yql/console/ since ajax.googleapis.com/ajax/services/feed/ was depercated.
 	 * @method jsonRequest
-	 * http://ajax.googleapis.com/ajax/services/feed/load?v=1.0&callback=?&q=https%3A%2F%2Fwww.facebook.com%2Ffeeds%2Fpage.php%3Fid%3D318424514044%26format%3Drss20&num=20
 	 * @param {url} url URL of the feed.
 	 * @param {integer} limit Limit on the number of results for the JSON request to return.
 	 * @return {url} The URL for the JSON request
 	 */
 	jsonRequest = function( url, limit ) {
 
-		var requestURL = wb.pageUrlParts.protocol + "//ajax.googleapis.com/ajax/services/feed/load?v=1.0&callback=?&q=" + encodeURIComponent( decodeURIComponent( url ) );
+		var requestURL = wb.pageUrlParts.protocol + "//query.yahooapis.com/v1/public/yql?q=select%20*%20from%20feed%20where%20url%20%3D%20'" + encodeURIComponent( decodeURIComponent( url ) ) + "'%20limit%20" + ( limit ? limit : 4 ) + "&format=json";
 
-		// API returns a maximum of 4 entries by default so only override if more entries should be returned
-		if ( limit > 4 ) {
-			requestURL += "&num=" + limit;
-		}
 		return requestURL;
 	},
 
@@ -194,7 +178,7 @@ var componentName = "wb-feeds",
 
 				fetch = {
 					dataType: "jsonp",
-					timeout: 3000
+					timeout: 10000
 				};
 
 				if ( fElem.attr( "data-ajax" ) ) {
@@ -203,6 +187,9 @@ var componentName = "wb-feeds",
 						fType =  "flickr";
 						callback = "jsoncallback";
 						$content.data( componentName + "-postProcess", [ ".wb-lbx" ] );
+					} else {
+						fType = "generic";
+						callback = "callback";
 					}
 
 					// We need a Gallery so lets add another plugin
@@ -229,9 +216,7 @@ var componentName = "wb-feeds",
 					fetch.url = url;
 
 					// Let's bind the template to the Entries
-					if ( url.indexOf( "facebook.com" ) !== -1 ) {
-						fType = "facebook";
-					} else if ( url.indexOf( "pinterest.com" ) > -1  ) {
+					if ( url.indexOf( "pinterest.com" ) > -1  ) {
 						fType = "pinterest";
 					} else {
 						fType = "generic";
@@ -270,10 +255,16 @@ var componentName = "wb-feeds",
 
 		len = items.length;
 		for ( i = 0; i !== len; i += 1 ) {
-			items[ i ].fIcon =  icon ;
+			items[ i ].fIcon =  icon;
 
-			if ( items[ i ].publishedDate === undef && items[ i ].published !== undef ) {
-				items[ i ].publishedDate = items[ i ].published;
+			if ( items[ i ].publishedDate === undef ) {
+				items[ i ].publishedDate = ( items[ i ].published || items[ i ].pubDate || items[ i ].updated || "" );
+			}
+
+			var link = items[ i ].link;
+
+			if ( link && link.href ) {
+				items[ i ].link = link.href;
 			}
 
 			entries.push( items[ i ] );
@@ -287,7 +278,7 @@ var componentName = "wb-feeds",
 			return 0;
 		}
 
-		toProcess -= 1 ;
+		toProcess -= 1;
 		$content.data( {
 			"toProcess": toProcess,
 			"entries": entries
@@ -400,12 +391,28 @@ $document.on( "ajax-fetched.wb data-ready.wb-feeds", selector + " " + feedLinkSe
 	// Filter out any events triggered by descendants
 	if ( event.currentTarget === eventTarget ) {
 		switch ( event.type ) {
-			case "ajax-fetched":
-				response = event.fetch.response;
+		case "ajax-fetched":
+			response = event.fetch.response;
+
+			if ( response.query ) {
+				var results = response.query.results;
+
+				if ( results ) {
+					data = results.entry ? results.entry : results.item;
+
+					if ( !Array.isArray( data ) ) {
+						data = [ data ];
+					}
+				} else {
+					data = [];
+				}
+			} else {
 				data = ( response.responseData ) ? response.responseData.feed.entries : response.items || response.feed.entry;
-				break;
-			default:
-				data = event.feedsData;
+			}
+
+			break;
+		default:
+			data = event.feedsData;
 		}
 
 		// Identify that initialization has completed
@@ -420,7 +427,7 @@ $document.on( "click", selector + " .feed-youtube", function( event ) {
 	var youTubeOverlaySelector  = "#wb-feeds-youtube-lbx",
 		$youTubeOverlay = $( youTubeOverlaySelector ),
 		youtubeData = wb.getData( event.currentTarget, "youtube" ),
-		videoUrl = "http://www.youtube.com/watch?v=" + youtubeData.videoId,
+		videoUrl = wb.pageUrlParts.protocol + "//www.youtube.com/watch?v=" + youtubeData.videoId,
 		videoSource = "<figure class='wb-mltmd'><video title='" + youtubeData.title + "'>" +
 			"<source type='video/youtube' src='" + videoUrl + "' />" +
 			"</video><figcaption><p>" +  youtubeData.title + "</p>" +

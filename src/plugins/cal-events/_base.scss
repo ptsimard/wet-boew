@@ -10,7 +10,7 @@
 	height: inherit;
 	list-style-type: none;
 	margin: 0;
-	margin-top: -0.5em;
+	margin-top: -.5em;
 	overflow: inherit;
 	padding: 0;
 	position: absolute;
@@ -25,34 +25,41 @@
 	}
 }
 
-.cal-days {
-	a {
-		&.cal-evt {
+.wb-calevt-cal {
+
+	//TODO: Remove this and make fluid the default
+	width: 19em;
+
+	.cal-days {
+		.cal-evt {
 			background: #176ca7;
 			color: $clrWhite;
 		}
-	}
 
-	td {
-		ul {
-			@extend %accessible-invisible;
-
-			&.ev-details {
-				@extend %wb-cal-event-show-event;
-			}
-		}
-
-		&:hover {
+		td {
 			ul {
-				@extend %wb-cal-event-show-event;
+				@extend %accessible-invisible;
+
+				&.ev-details {
+					@extend %wb-cal-event-show-event;
+				}
+			}
+
+			&:hover {
+				ul {
+					@extend %wb-cal-event-show-event;
+				}
 			}
 		}
 	}
-}
 
-.cal-cnt-fluid {
-	&.cal-cnt,
-	table.cal-cnt {
+	.cal-evt-lnk {
+		display: block;
+		padding: .5em;
+	}
+
+	//TODO: Remove this and make fluid the default
+	&.cal-cnt-fluid {
 		width: 100%;
 	}
 }

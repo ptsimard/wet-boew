@@ -6,10 +6,17 @@
 /**
  * Mobile-friendly styles
  */
+%carousel-border-0 {
+	border: 0;
+}
+
 %tabs-screen-sm-max-backwards-compat {
 	> {
 		details {
+			border: 0;
 			border-bottom: $tablist-screen-sm-seperator-border-color $tablist-screen-sm-seperator-border-style $tablist-screen-sm-seperator-border-width;
+			border-bottom-left-radius: 0;
+			border-bottom-right-radius: 0;
 
 			&:last-of-type {
 				border-bottom: 0;
@@ -19,9 +26,16 @@
 				min-height: 0 !important;
 			}
 
+			> {
+				summary {
+					border: 0;
+				}
+			}
+
 			&[open] {
 				> {
 					summary {
+						border: 0;
 						margin-bottom: 0;
 					}
 				}
@@ -34,9 +48,9 @@
 	@extend %tabs-screen-sm-max-backwards-compat; /* Only for backwards compatibility. Should be removed in v4.1. */
 	border: {
 		color: $tablist-screen-sm-border-color;
+		radius: $tablist-screen-sm-border-radius;
 		style: $tablist-screen-sm-border-style;
 		width: $tablist-screen-sm-border-width;
-		radius: $tablist-screen-sm-border-radius;
 	}
 	margin-bottom: 15px;
 	padding: {
@@ -56,5 +70,13 @@
 				display: none;
 			}
 		}
+	}
+
+	&.carousel-s1 {
+		@extend %carousel-border-0;
+	}
+
+	&.carousel-s2 {
+		@extend %carousel-border-0;
 	}
 }

@@ -15,7 +15,7 @@
  * not once per instance of plugin on the page. So, this is a good place to define
  * variables that are common to all instances of the plugin on a page.
  */
- var componentName = "wb-charts",
+var componentName = "wb-charts",
 	selector = "." + componentName,
 	initEvent = "wb-init" + selector,
 	tableParsingEvent = "passiveparse.wb-tableparser",
@@ -114,6 +114,29 @@
 						grid: {
 							hoverable: true
 						}
+					},
+					slicelegend: {
+						base: "pie",
+						series: {
+							pie: {
+								radius: 1,
+								label: {
+									radius: 1,
+									show: true,
+									threshold: 0.05
+								},
+								combine: {
+									threshold: 0.05,
+									color: "#555",
+									label: i18nText.slicelegend
+								}
+							}
+						},
+						fn: {
+							"/series/pie/label/formatter": function( label ) {
+								return label;
+							}
+						}
 					}
 				},
 
@@ -183,7 +206,7 @@
 									parseFloat( cellValue.replace( /(\d{1,3}(?:(?: |,)\d{3})*)(?:(?:.|,)(\d{1,2}))?$/, function( a, b, c ) {
 										return b.replace( / |,/g, "" ) + "." + c || "0";
 									} ), 10 ),
-									cellValue.match ( dataCellUnitRegExp )
+									cellValue.match( dataCellUnitRegExp )
 								];
 							}
 						}
@@ -1094,7 +1117,8 @@
 				i18n = wb.i18n;
 				i18nText = {
 					tableMention: i18n( "hyphen" ) + i18n( "tbl-txt" ),
-					tableFollowing: i18n( "hyphen" ) + i18n( "tbl-dtls" )
+					tableFollowing: i18n( "hyphen" ) + i18n( "tbl-dtls" ),
+					slicelegend: i18n( "chrt-cmbslc" )
 				};
 			}
 

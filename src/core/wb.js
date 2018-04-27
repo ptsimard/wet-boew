@@ -24,7 +24,7 @@ var getUrlParts = function( url ) {
 			host: a.host,
 			hostname: a.hostname,
 			port: a.port,
-			pathname: a.pathname,
+			pathname: a.pathname.replace( /^([^\/])/, "/$1" ), // Prefix pathname with a slash in browsers that don't natively do it (i.e. all versions of IE and possibly early versions of Edge). See pull request #8110.
 			protocol: a.protocol,
 			hash: a.hash,
 			search: a.search,
@@ -37,7 +37,7 @@ var getUrlParts = function( url ) {
 					key, strings, i;
 
 				for ( i = 0; i !== len; i += 1 ) {
-					if ( key = queryString[ i ] ) {
+					if ( ( key = queryString[ i ] ) !== null ) {
 						strings = key.split( "=" );
 						results[ strings[ 0 ] ] = strings[ 1 ];
 					}
@@ -57,7 +57,7 @@ var getUrlParts = function( url ) {
 	 * @variable $src
 	 * @return {jQuery Element} of wb script element
 	 */
-	$src = $( "script[src*='wet-boew.js'],script[src*='wet-boew.min.js']" )
+	$src = $( "script[src*='wet-boew.js'],script[src*='wet-boew.min.js'],script[data-wb-core]" )
 		.last(),
 
 	/**
@@ -66,27 +66,34 @@ var getUrlParts = function( url ) {
 	 */
 	lang = document.documentElement.lang,
 
-	/**
-	 * @variable $homepath
-	 * @return {string} of version current path to JS directory
-	 */
-	$homepath = $src.prop( "src" )
-		.split( "?" )[ 0 ].split( "/" )
-		.slice( 0, -1 )
-		.join( "/" ),
+	paths = ( function( ele ) {
+		var paths = {};
 
-	/**
-	 * @variable $homecss
-	 * @return {string} of version current path to CSS directory
-	 */
-	$homecss = $homepath.substring( 0, $homepath.length - 2 ) + "css",
+		paths.home = ele.prop( "src" )
+				.split( "?" )[ 0 ].split( "/" )
+				.slice( 0, -1 )
+				.join( "/" );
+		paths.asset = paths.home + "/../assets";
+		paths.template = paths.home + "/assets/templates";
+		paths.dep = paths.home + "/deps";
+		paths.js = paths.home;
+		paths.css = paths.home.substring( 0, paths.home.length - 2 ) + "css";
+		paths.mode = ele.prop( "src" ).indexOf( ".min" ) < 0 ? "" : ".min";
 
-	/**
-	 * @variable $mode
-	 * @return {string} of version of JS [development or production]
-	 */
-	$mode = $src.prop( "src" )
-		.indexOf( ".min" ) < 0 ? "" : ".min",
+		if ( ele[ 0 ].hasAttribute( "data-wb-core" ) ) {
+			$.extend( paths, {
+				home: ele.attr( "data-home" ),
+				asset: ele.attr( "data-asset" ),
+				template: ele.attr( "data-template" ),
+				dep: ele.attr( "data-dep" ),
+				js: ele.attr( "data-js" ),
+				css: ele.attr( "data-css" ),
+				mode: ele.attr( "data-mode" )
+			} );
+		}
+
+		return paths;
+	}( $src ) ),
 
 	/**
 	 * @variable oldie
@@ -98,10 +105,10 @@ var getUrlParts = function( url ) {
 			div = document.createElement( "div" ),
 			all = div.getElementsByTagName( "i" );
 
-		while (
+		while ( (
 			div.innerHTML = "<!--[if gt IE " + ( v += 1 ) + "]><i></i><![endif]-->",
 			all[ 0 ]
-		) {}
+		) ) {};
 
 		return v > 4 ? v : undef;
 	}() ),
@@ -133,12 +140,12 @@ var getUrlParts = function( url ) {
 	 *-----------------------------
 	 */
 	wb = {
-		"/": $homepath,
-		"/assets": $homepath + "/../assets",
-		"/templates": $homepath + "/assets/templates",
-		"/deps": $homepath + "/deps",
+		"/": paths.home,
+		"/assets": paths.asset,
+		"/templates": paths.template,
+		"/deps": paths.dep,
 		lang: lang,
-		mode: $mode,
+		mode: paths.mode,
 		doc: $( document ),
 		win: $( window ),
 		html: $( "html" ),
@@ -215,17 +222,18 @@ var getUrlParts = function( url ) {
 		},
 
 		// Lets load some variables into wb for IE detection
-		other:  !oldie,
+		other: !oldie,
 		desktop: ( window.orientation === undefined ),
-		ie:     !!oldie,
-		ie6:    ( oldie === 6 ),
-		ie7:    ( oldie === 7 ),
-		ie8:    ( oldie === 8 ),
-		ie9:    ( oldie === 9 ),
-		ielt7:  ( oldie < 7 ),
-		ielt8:  ( oldie < 8 ),
-		ielt9:  ( oldie < 9 ),
+		ie: !!oldie,
+		ie6: ( oldie === 6 ),
+		ie7: ( oldie === 7 ),
+		ie8: ( oldie === 8 ),
+		ie9: ( oldie === 9 ),
+		ielt7: ( oldie < 7 ),
+		ielt8: ( oldie < 8 ),
+		ielt9: ( oldie < 9 ),
 		ielt10: ( oldie < 10 ),
+		ie11: ( !!navigator.userAgent.match( /Trident\/7\./ ) ),
 
 		selectors: [],
 
@@ -247,6 +255,16 @@ var getUrlParts = function( url ) {
 			"#23447e",
 			"#999999"
 		],
+
+		// Get and generate a unique session id
+		sessionGUID: function() {
+			var sessionId = sessionStorage.getItem( "wb-session-GUID" );
+			if ( !sessionId ) {
+				sessionId = wb.guid();
+				sessionStorage.setItem( "wb-session-GUID", sessionId );
+			}
+			return sessionId;
+		},
 
 		// Add a selector to be targeted by timerpoke
 		add: function( selector ) {
@@ -342,22 +360,22 @@ var getUrlParts = function( url ) {
 					( typeof mixin === "string" && mixin !== "" ) << 2;
 
 			switch ( truthiness ) {
-				case 1:
+			case 1:
 
-					// only key was provided
-					return dictionary[ key ];
+				// only key was provided
+				return dictionary[ key ];
 
-				case 3:
+			case 3:
 
-					// key and state were provided
-					return dictionary[ key ][ state ];
+				// key and state were provided
+				return dictionary[ key ][ state ];
 
-				case 7:
+			case 7:
 
-					// key, state, and mixin were provided
-					return dictionary[ key ][ state ].replace( "[MIXIN]", mixin );
-				default:
-					return "";
+				// key, state, and mixin were provided
+				return dictionary[ key ][ state ].replace( "[MIXIN]", mixin );
+			default:
+				return "";
 			}
 		},
 
@@ -386,6 +404,18 @@ var getUrlParts = function( url ) {
 
 		stripWhitespace: function( str ) {
 			return str.replace( /\s+/g, "" );
+		},
+
+		// Core function to deal with the dependency racing issue
+		whenLibReady: function( testCallback, readyCallback ) {
+			if ( testCallback() ) {
+				readyCallback();
+			} else {
+				setTimeout( function() {
+					wb.whenLibReady( testCallback, readyCallback );
+				}, 50 );
+			}
+
 		}
 	};
 
@@ -408,7 +438,7 @@ window.wb = wb;
  * @prefix: site! - adds the root js directory of yepnope resources
  */
 yepnope.addPrefix( "site", function( resourceObj ) {
-	resourceObj.url = $homepath + "/" + resourceObj.url;
+	resourceObj.url = paths.js + "/" + resourceObj.url;
 	return resourceObj;
 } );
 
@@ -421,15 +451,15 @@ yepnope.addPrefix( "plyfll", function( resourceObj ) {
 
 	if ( disabled && url.indexOf( "svg" ) === -1 ) {
 		resourceObj.bypass = true;
-	} else if ( !$mode ) {
+	} else if ( !paths.mode ) {
 		url = url.replace( ".min", "" );
 	}
 
 	if ( url.indexOf( ".css" ) !== -1 ) {
 		resourceObj.forceCSS = true;
-		path = $homecss;
+		path = paths.css;
 	} else {
-		path = $homepath;
+		path = paths.js;
 	}
 	resourceObj.url = path + "/polyfills/" + url;
 
@@ -440,9 +470,39 @@ yepnope.addPrefix( "plyfll", function( resourceObj ) {
  * @prefix: i18n! - adds the correct document language for our i18n library
  */
 yepnope.addPrefix( "i18n", function( resourceObj ) {
-	resourceObj.url = $homepath + "/" + resourceObj.url + lang + $mode + ".js";
+	resourceObj.url = paths.js + "/" + resourceObj.url + lang + paths.mode + ".js";
 	return resourceObj;
 } );
+
+/**
+ * @prefix: mthjx! - adds the root directory of MathJax resources
+ */
+yepnope.addPrefix( "mthjx", function( resourceObj ) {
+	resourceObj.url = paths.js + "/MathJax/" + resourceObj.url;
+	return resourceObj;
+} );
+
+/*-----------------------------
+ * Deps loading, call "complete" callback when the deps is ready if a testReady is defined
+ *-----------------------------*/
+wb.modernizrLoad = Modernizr.load;
+Modernizr.load = function( options ) {
+	var i, i_len, i_cache,
+		testReady, complete;
+	if ( !$.isArray( options ) ) {
+		options = [ options ];
+	}
+	i_len = options.length;
+	for ( i = 0; i !== i_len; i += 1 ) {
+		i_cache = options[ i ];
+		testReady = i_cache.testReady;
+		complete = i_cache.complete;
+		if ( testReady && complete ) {
+			i_cache.complete = wb.whenLibReady( testReady, complete );
+		}
+	}
+	wb.modernizrLoad( options );
+};
 
 /*-----------------------------
  * Modernizr Polyfill Loading
@@ -510,14 +570,18 @@ Modernizr.load( [
 
 					// Load the MathML dependency. Since the polyfill is only loaded
 					// when !Modernizr.mathml, we can skip the test here.
-					Modernizr.load( {
-						load: "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=Accessible",
+					Modernizr.load( [ {
+						load: "timeout=500!https://cdn.jsdelivr.net/npm/mathjax@WET_BOEW_VERSION_MATHJAX/MathJax.js?config=Accessible",
 						complete: function() {
+							Modernizr.load( [ {
+								test: window.MathJax === undefined,
+								yep: "mthjx!MathJax.js?config=Accessible"
+							} ] );
 
 							// Identify that initialization has completed
 							wb.ready( $document, componentName );
 						}
-					} );
+					} ] );
 				} );
 
 				wb.add( selector );
@@ -537,6 +601,9 @@ Modernizr.load( [
 		nope: "plyfll!svg.min.js"
 	}, {
 		load: "i18n!i18n/",
+		testReady: function() {
+			return wb.i18nDict.tphp;
+		},
 		complete: function() {
 			wb.start();
 		}

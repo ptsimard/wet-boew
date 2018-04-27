@@ -19,7 +19,7 @@ $tab-margin-width: 10px;
 
 %tab-background {
 	background: $carousel-tabpanel-figcaption-bg-color;
-	background: transparentize($carousel-tabpanel-figcaption-bg-color, 0.1);
+	background: transparentize($carousel-tabpanel-figcaption-bg-color, .1);
 
 	img {
 		height: auto;
@@ -31,15 +31,70 @@ $tab-margin-width: 10px;
 	bottom: 0;
 	color: $carousel-tabpanel-figcaption-color;
 	left: 0;
-	padding: 0.5em 1em;
+	padding: .5em 1em;
 	position: relative;
 	right: 0;
 	z-index: 101;
 }
 
-%carousel-link {
-	a {
-		color: $carousel-tabpanel-link-color;
+%carousel-tabpanel-link-outline-common {
+	content: "";
+	outline: inherit;
+	position: absolute;
+}
+
+%carousel-tabpanel-link {
+	[role="tabpanel"] {
+		a {
+			color: #000;
+			outline-offset: 0;
+
+			figure {
+				outline: inherit;
+
+				&::before {
+					@extend %carousel-tabpanel-link-outline-common;
+					height: calc(100% - #{$carousel-tabpanel-outline-offset * 2});
+					margin: 2px;
+					outline-color: $carousel-tabpanel-outline-color-inner;
+					width: calc(100% - #{$carousel-tabpanel-outline-offset * 2});
+				}
+
+				&::after {
+					@extend %carousel-tabpanel-link-outline-common;
+					height: calc(100% - #{$carousel-tabpanel-outline-offset});
+					margin: 1px;
+					top: 0;
+					width: calc(100% - #{$carousel-tabpanel-outline-offset});
+				}
+			}
+
+			figcaption {
+				color: $carousel-tabpanel-link-color;
+				text-decoration: underline;
+			}
+		}
+
+		figure {
+			a {
+				color: $carousel-tabpanel-link-color;
+			}
+		}
+	}
+}
+
+%carousel-tabpanel-video {
+	.display {
+		&:focus-within {
+			outline: 1px dotted $carousel-tabpanel-outline-color-inner;
+			outline-offset: -2px;
+		}
+	}
+
+	video {
+		&:focus {
+			outline-offset: -1px;
+		}
 	}
 }
 
@@ -132,6 +187,12 @@ $tab-margin-width: 10px;
 	/* For backwards compatibility. Should be removed in v4.1 */
 	@extend %tabs-details-padding-6-12;
 
+	details {
+		&[open] {
+			border-top-left-radius: 0;
+		}
+	}
+
 	> {
 		.tabpanels {
 			@extend %tabs-details-padding-6-12;
@@ -175,24 +236,32 @@ $tab-margin-width: 10px;
 				&:focus,
 				&:hover {
 					background: $tablist-hover-bg-color;
-					background: transparentize($tablist-hover-bg-color, 0.1);
+					background: transparentize($tablist-hover-bg-color, .1);
 				}
 
 				&.active {
-					background: $tablist-active-bg-color;
+					@if $tablist-active-bg-color {
+						background: $tablist-active-bg-color;
+					} @else if $main-bg {
+						background: $main-bg
+					} @else if $content-bg {
+						background: $content-bg
+					} @else {
+						background: $body-bg;
+					}
 					border-bottom: 0;
 					cursor: default;
 					padding-bottom: 1px;
 					z-index: 2;
 
 					a {
-						cursor: default;
-						padding-top: 6px;
 						border: {
 							color: $tablist-active-link-border-color;
 							style: $tablist-active-link-border-style;
 							width: $tablist-active-link-border-width;
 						}
+						cursor: default;
+						padding-top: 6px;
 					}
 				}
 
@@ -202,7 +271,7 @@ $tab-margin-width: 10px;
 					> {
 						div {
 							position: relative;
-							top: 0.4em;
+							top: 0;
 						}
 					}
 
@@ -248,11 +317,9 @@ $tab-margin-width: 10px;
 	 * Style 1 - Basic carousel style
 	 */
 	&.carousel-s1 {
+		@extend %carousel-tabpanel-link;
+		@extend %carousel-tabpanel-video;
 		border-top: 0;
-
-		[role="tabpanel"] {
-			@extend %carousel-link;
-		}
 
 		[role="tablist"] {
 			bottom: 1em;
@@ -276,27 +343,20 @@ $tab-margin-width: 10px;
 					&.tab-count {
 						background: none;
 						border: 0;
-						font-size: 0.9em;
-
-						> {
-							div {
-								top: 0.7em;
-							}
-						}
+						font-size: .9em;
+						padding: 0 .1em;
+						top: .55em;
 
 						&.active,
 						&:focus,
 						&:hover {
 							cursor: default;
-							top: 0;
 						}
 					}
 
 					&.active,
 					&:focus,
 					&:hover {
-						top: 1px;
-
 						a {
 							@extend %tabs-carousel-border-top-none-padding-top-1;
 						}
@@ -313,7 +373,6 @@ $tab-margin-width: 10px;
 
 		figcaption {
 			@extend %tab-figure-captions;
-			@extend %carousel-link;
 
 			p {
 				@extend %tabs-margin-bottom-0;
@@ -325,12 +384,9 @@ $tab-margin-width: 10px;
 	 * Style 2 - Slider-like carousel style
 	 */
 	&.carousel-s2 {
+		@extend %carousel-tabpanel-link;
+		@extend %carousel-tabpanel-video;
 		background: $carousel-s2-tablist-controls-bg-color;
-		padding-bottom: 4.375em;
-
-		[role="tabpanel"] {
-			@extend %carousel-link;
-		}
 
 		[role="tablist"] {
 			bottom: 0;
@@ -407,8 +463,8 @@ $tab-margin-width: 10px;
 							@extend %carousel-s2-btn-common;
 							@extend %carousel-s2-btn-color;
 							font-size: 1.5em;
-							margin-top: 0.4em;
-							margin-right: 0.65em;
+							margin-right: .65em;
+							margin-top: .4em;
 							padding: 8px 10px 4px;
 
 							&:focus,
@@ -419,21 +475,22 @@ $tab-margin-width: 10px;
 					}
 				}
 			}
+
+			a {
+				&:focus {
+					outline-offset: 0;
+				}
+			}
 		}
 
 		// TODO: Simplify with extends when libsass fully supports @extends
 		figure {
 			@extend %tabs-position-relative;
 			@extend %tab-background;
-
-			img {
-				@extend %tab-width-100-height-auto;
-			}
 		}
 
 		figcaption {
 			@extend %tab-figure-captions;
-			@extend %carousel-link;
 
 			p {
 				@extend %tabs-margin-bottom-0;
@@ -443,7 +500,7 @@ $tab-margin-width: 10px;
 }
 
 .wb-disable {
-	.csstransitions {
+	&.csstransitions {
 		.wb-tabs {
 			[role="tabpanel"] {
 				&.out {
@@ -455,6 +512,10 @@ $tab-margin-width: 10px;
 	}
 
 	.wb-tabs {
+		&.carousel-s2 {
+			background: transparent;
+		}
+
 		// Only for backwards compatibility. Should be removed in v4.1.
 		> {
 			details {
@@ -463,7 +524,7 @@ $tab-margin-width: 10px;
 				&[open] {
 					> {
 						summary {
-							@extend %global-display-block-important;
+							display: list-item !important;
 						}
 					}
 				}
@@ -477,7 +538,7 @@ $tab-margin-width: 10px;
 						&[open] {
 							> {
 								summary {
-									@extend %global-display-block-important;
+									display: list-item !important;
 								}
 							}
 						}
@@ -486,13 +547,20 @@ $tab-margin-width: 10px;
 			}
 		}
 
+		.out {
+			visibility: visible;
+		}
+
 		[role="tablist"] {
 			display: none;
 		}
 
 		[role="tabpanel"] {
+			animation: none;
 			display: block;
+			margin-bottom: .5em;
 			opacity: 1;
+			transform: none;
 		}
 	}
 }

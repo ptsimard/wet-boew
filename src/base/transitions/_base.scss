@@ -60,7 +60,7 @@
 
 		&.out {
 			animation-name: popout;
-			transform: scale(0.8);
+			transform: scale(.8);
 		}
 	}
 }
@@ -68,7 +68,7 @@
 @keyframes popin {
 	0% {
 		@include visible;
-		transform: scale(0.8);
+		transform: scale(.8);
 	}
 
 	100% {
@@ -85,7 +85,7 @@
 
 	100% {
 		@include invisible;
-		transform: scale(0.8);
+		transform: scale(.8);
 	}
 }
 
@@ -104,6 +104,23 @@
 		animation-duration: 125ms;
 		animation-name: fadeout;
 		z-index: -1;
+
+		&.noheight {
+			animation-name: fadeoutnoheight;
+			max-height: 0;
+		}
+	}
+
+	&.reverse {
+		&.in {
+			@extend %invisible;
+			animation-name: fadeout;
+		}
+
+		&.out {
+			@extend %visible;
+			animation-name: fadein;
+		}
 	}
 }
 
@@ -127,6 +144,21 @@
 	}
 }
 
+@keyframes fadeoutnoheight {
+	0% {
+		@include visible;
+		max-height: 100%;
+	}
+
+	99.9999% {
+		max-height: 100%;
+	}
+
+	100% {
+		@include invisible;
+		max-height: 0;
+	}
+}
 
 .slide {
 	&.out,

@@ -14,7 +14,7 @@
  * teardown `after()` for more than one test suite (as is the case below.)
  */
 describe( "Prettify test suite", function() {
-	var spy, callback, $prettify,
+	var callback, $prettify,
 		$document = wb.doc,
 		$body = $document.find( "body" ),
 		sandbox = sinon.sandbox.create();
@@ -25,7 +25,7 @@ describe( "Prettify test suite", function() {
 	before( function( done ) {
 
 		// Spy on jQuery's trigger method to see how it's called during the plugin's initialization
-		spy = sandbox.spy( $.prototype, "trigger" );
+		sandbox.spy( $.prototype, "trigger" );
 
 		// Start the tests once the plugin has been finished processing
 		$document.on( "wb-ready.wb-prettify", function() {
@@ -115,9 +115,7 @@ describe( "Prettify test suite", function() {
 			$body.append( "<pre class='test'></pre>" );
 			$prettify
 				.removeClass( "wb-prettify-inited" )
-				.addClass( "lang-sql" )
-				.addClass( "all-pre" )
-				.addClass( "linenums" )
+				.addClass( "lang-sql all-pre linenums" )
 				.trigger( "wb-init.wb-prettify" );
 		} );
 
@@ -148,8 +146,7 @@ describe( "Prettify test suite", function() {
 
 			$body.append( "<pre class='test'></pre>" );
 			$prettify
-				.removeClass( "wb-prettify-inited" )
-				.removeClass( "all-pre linenums" )
+				.removeClass( "wb-prettify-inited all-pre linenums" )
 				.data( {
 					allpre: true,
 					linenums: true

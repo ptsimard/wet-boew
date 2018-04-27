@@ -4,11 +4,15 @@
  */
 
 @import "../../variables";
-@import "../../../lib/magnific-popup/src/css/main";
+@import "magnific-popup/src/css/main";
 
 %lightbox-button-outline {
 	outline: 1px dotted #fff;
 	outline-offset: -2px;
+}
+
+%lightbox-modal-hide {
+	visibility: hidden !important;
 }
 
 .lbx-hide-gal {
@@ -18,6 +22,30 @@
 
 		&:first-child {
 			display: block;
+		}
+	}
+}
+
+body {
+	&.wb-modal {
+		> {
+			#wb-tphp,
+			header,
+			main,
+			footer
+			{
+				@extend %lightbox-modal-hide;
+			}
+		}
+
+		summary {
+			@extend %lightbox-modal-hide;
+		}
+
+		.modal-dialog {
+			summary {
+				visibility: visible !important;
+			}
 		}
 	}
 }
@@ -34,6 +62,11 @@
 
 .modal-body {
 	background: $clrWhite;
+}
+
+.modal-footer {
+	background: $clrWhite;
+	margin-top: 0;
 }
 
 .mfp-gallery {

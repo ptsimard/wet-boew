@@ -25,6 +25,7 @@ module.exports = (grunt) ->
 			"demos-min"
 			"htmllint"
 			"bootlint"
+			"sri"
 		]
 	)
 
@@ -38,6 +39,7 @@ module.exports = (grunt) ->
 			"sprites"
 			"css"
 			"js"
+			"string-replace"
 		]
 	)
 
@@ -47,7 +49,6 @@ module.exports = (grunt) ->
 		[
 			"js-min"
 			"css-min"
-			"imagemin"
 		]
 	)
 
@@ -60,7 +61,7 @@ module.exports = (grunt) ->
 					"copy:deploy"
 					"gh-pages:travis"
 					"gh-pages:travis_cdn"
-					"gh-pages:travis_themes_cdn"
+					"gh-pages:travis_theme_cdn"
 					"wb-update-examples"
 				]
 	)
@@ -91,7 +92,8 @@ module.exports = (grunt) ->
 		"init"
 		"Only needed when the repo is first cloned"
 		[
-			"modernizr"
+#			"modernizr"
+			"wget:jqueryOldIE"
 		]
 	)
 
@@ -143,7 +145,7 @@ module.exports = (grunt) ->
 		"INTERNAL: Compiles Sass and copies third party CSS to the dist folder"
 		[
 			"sass"
-			"autoprefixer"
+			"postcss"
 			"csslint:unmin"
 			"usebanner:css"
 		]
@@ -230,8 +232,8 @@ module.exports = (grunt) ->
 		"test"
 		"INTERNAL: Runs testing tasks except for SauceLabs testing"
 		[
-			"jshint"
-			"jscs"
+			"eslint"
+			"sasslint"
 		]
 	)
 
@@ -246,7 +248,7 @@ module.exports = (grunt) ->
 			]
 
 			#Prevents multiple instances of connect from running
-			if grunt.config.get('connect.test.options.port') is `undefined`
+			if grunt.config.get "connect.test.options.port" is undefined
 				grunt.task.run "connect:test"
 	)
 
@@ -259,10 +261,10 @@ module.exports = (grunt) ->
 				grunt.task.run(
 					"htmlmin"
 					"useMinAssets"
-				);
+				)
 			else
 
-				if target != "test" and grunt.config("i18n_csv.assemble.locales") == undefined
+				if target != "test" and grunt.config "i18n_csv.assemble.locales" is undefined
 					grunt.task.run(
 						"i18n_csv:assemble"
 					)
@@ -271,7 +273,7 @@ module.exports = (grunt) ->
 				target = if target then ":" + target else ""
 				grunt.task.run(
 					"assemble" + target
-				);
+				)
 	)
 
 	@registerTask(
@@ -281,16 +283,16 @@ module.exports = (grunt) ->
 			htmlFiles = grunt.file.expand(
 				"dist/**/*.html"
 				"!dist/unmin/**/*.html"
-			);
+			)
 
 			htmlFiles.forEach(
 				( file ) ->
-					contents = grunt.file.read( file )
-					contents = contents.replace( /\.\.\/(wet\-boew|theme\-wet\-boew)/g, "$1" )
-					contents = contents.replace( /\"(?!https:)([^\"]*)?\.(js|css)\"/g, "\"$1.min.$2\"" )
+					contents = grunt.file.read file
+					contents = contents.replace /\.\.\/(wet\-boew|theme\-wet\-boew)/g, "$1"
+					contents = contents.replace /\"(?!https:\/\/github\.com)([^\"]*)?\.(js|css)\"/g, "\"$1.min.$2\""
 
-					grunt.file.write(file, contents);
-			);
+					grunt.file.write file, contents
+			)
 	)
 
 	globalConnectMiddleware = (connect, middlewares) ->
@@ -299,16 +301,17 @@ module.exports = (grunt) ->
 				/json|text|javascript|dart|image\/svg\+xml|application\/x-font-ttf|application\/vnd\.ms-opentype|application\/vnd\.ms-fontobject/.test res.getHeader("Content-Type")
 		)
 
-	grunt.util.linefeed = "\n"
+	@util.linefeed = "\n"
 	# Project configuration.
-	grunt.initConfig
+	@initConfig
 
 		# Metadata.
-		pkg: grunt.file.readJSON("package.json")
+		pkg: @file.readJSON "package.json"
 		coreDist: "dist/wet-boew"
 		themeDist: "dist/theme-wet-boew"
-		jqueryVersion: grunt.file.readJSON("lib/jquery/bower.json")
-		jqueryOldIEVersion: grunt.file.readJSON("lib/jquery-oldIE/bower.json")
+		jqueryVersion: "<%= pkg.dependencies.jquery %>"
+		jqueryOldIEVersion: "1.11.1"
+		MathJaxVersion: "<%= pkg.dependencies.mathjax %>"
 		banner: "/*!\n * Web Experience Toolkit (WET) / Boîte à outils de l'expérience Web (BOEW)\n * wet-boew.github.io/wet-boew/License-en.html / wet-boew.github.io/wet-boew/Licence-fr.html\n" +
 				" * v<%= pkg.version %> - " + "<%= grunt.template.today('yyyy-mm-dd') %>\n *\n */"
 		modernizrBanner: "/*! Modernizr (Custom Build) | MIT & BSD */\n"
@@ -316,7 +319,31 @@ module.exports = (grunt) ->
 		i18nGDocsID: "1BmMrKN6Rtx-dwgPNEZD6AIAQdI4nNlyVVVCml0U594o"
 		i18nGDocsSheet: 1
 
+		# Commit Messages
+		commitMessage: " Commit wet-boew/wet-boew#" + process.env.TRAVIS_COMMIT
+		travisBuildMessage: "Travis build " + process.env.TRAVIS_BUILD_NUMBER
+		distDeployMessage: ((
+			if process.env.TRAVIS_TAG
+				"Production files for the " + process.env.TRAVIS_TAG + " release."
+			else
+				"<%= travisBuildMessage %>"
+		)) + "<%= commitMessage %>"
+		cdnDeployMessage: ((
+			if process.env.TRAVIS_TAG
+				"CDN files for the " + process.env.TRAVIS_TAG + " release."
+			else
+				"<%= travisBuildMessage %>"
+		)) + "<%= commitMessage %>"
+
 		deployBranch: "v4.0-dist"
+
+		checkDependencies:
+			all:
+				options:
+					npmInstall: false
+
+		clean:
+			dist: ["dist"]
 
 		# Task configuration.
 		wget:
@@ -326,6 +353,17 @@ module.exports = (grunt) ->
 				src: "https://docs.google.com/spreadsheets/d/<%= i18nGDocsID %>/export?gid=<%= i18nGDocsSheet %>&format=csv"
 				dest: "src/i18n/i18n.csv"
 
+			jqueryOldIE:
+				options:
+					baseUrl: "https://ajax.googleapis.com/ajax/libs/jquery/<%= jqueryOldIEVersion %>/"
+					overwrite: true
+				src: [
+					"jquery.js"
+					"jquery.min.js"
+					"jquery.min.map"
+				]
+				dest: "lib/jquery-oldIE"
+
 		concat:
 			options:
 				banner: "<%= banner %><%= modernizrBanner %>"
@@ -334,7 +372,7 @@ module.exports = (grunt) ->
 				options:
 					stripBanners: false
 				src: [
-					"lib/modernizr/modernizr-custom.js"
+					"dep/modernizr-custom.js"
 					"src/core/wb.js"
 					"src/core/helpers.js"
 					"src/plugins/**/*.js"
@@ -349,11 +387,10 @@ module.exports = (grunt) ->
 				options:
 					stripBanners: false
 				src: [
-					"lib/modernizr/modernizr-custom.js"
-					"lib/respond/src/respond.js"
+					"dep/modernizr-custom.js"
 					"lib/excanvas/excanvas.js"
-					"lib/html5shiv/dist/html5shiv-printshiv.js"
-					"lib/es5-shim/es5-shim.js"
+					"node_modules/html5shiv/dist/html5shiv-printshiv.js"
+					"node_modules/es5-shim/es5-shim.js"
 					"src/core/wb.js"
 					"!src/plugins/**/test.js"
 					"!src/plugins/**/assets/*.js"
@@ -385,19 +422,20 @@ module.exports = (grunt) ->
 
 			i18n:
 				options:
+					banner: ""
 					process: ( src, filepath ) ->
 						lang = filepath.replace grunt.config( "coreDist" ) + "/js/i18n/", ""
 						# jQuery validation uses an underscore for locals
 						lang = lang.replace "_", "-"
-						validationPath = "lib/jquery-validation/src/localization/"
+						validationPath = "node_modules/jquery-validation/dist/localization/"
 
 						# Check and append message file
 						messagesPath = validationPath + "messages_" + lang
-						messages = if grunt.file.exists messagesPath then grunt.file.read( messagesPath ) else ""
+						messages = if grunt.file.exists messagesPath then grunt.file.read messagesPath else ""
 
 						# Check and append method file
 						methodsPath = validationPath + "methods_" + lang
-						methods = if grunt.file.exists methodsPath then grunt.file.read( methodsPath ) else ""
+						methods = if grunt.file.exists methodsPath then grunt.file.read methodsPath else ""
 
 						if methods != "" or messages != ""
 							src += "\nwb.doc.one( \"formLanguages.wb\", function() {\n"
@@ -441,8 +479,8 @@ module.exports = (grunt) ->
 				layout: "default.hbs"
 				environment:
 					root: "/v4.0-ci/unmin"
-					jqueryVersion: "<%= jqueryVersion.version %>"
-					jqueryOldIEVersion: "<%= jqueryOldIEVersion.version %>"
+					jqueryVersion: "<%= jqueryVersion %>"
+					jqueryOldIEVersion: "<%= jqueryOldIEVersion %>"
 				assets: "dist/unmin"
 
 			theme:
@@ -509,6 +547,8 @@ module.exports = (grunt) ->
 				]
 
 			test:
+				options:
+					offline: true
 				expand: true
 				cwd: "site/pages"
 				src: "test/test.hbs"
@@ -547,8 +587,24 @@ module.exports = (grunt) ->
 				staticImagePath: '#{$wb-assets-path}'
 				output: "scss"
 
+		sasslint:
+			options:
+				configFile: ".sass-lint.yml"
+			all:
+				expand: true
+				src: [
+						"site/**/*.scss"
+						"src/**/*.scss"
+						"theme/**/*.scss"
+						"!src/**/sprites/**"
+					]
+
 		# Compiles the Sass files
 		sass:
+			options:
+				includePaths: [
+					"node_modules"
+				]
 			all:
 				files: [
 					expand: true
@@ -606,18 +662,19 @@ module.exports = (grunt) ->
 					ext: ".css"
 				]
 
-		autoprefixer:
+		postcss:
 			# Only vendor prefixing and no IE8
 			modern:
 				options:
-					browsers: [
-						"last 2 versions"
-						"android >= 2.3"
-						"bb >= 7"
-						"ff >= 17"
-						"ie > 8"
-						"ios 5"
-						"opera 12.1"
+					processors: [
+						require("autoprefixer")(
+							browsers: [
+								"last 2 versions"
+								"bb >= 10"
+								"Firefox ESR"
+								"ie > 10"
+							]
+						)
 					]
 				files: [
 					{
@@ -644,14 +701,15 @@ module.exports = (grunt) ->
 			# Needs both IE8 and vendor prefixing
 			mixed:
 				options:
-					browsers: [
-						"last 2 versions"
-						"android >= 2.3"
-						"bb >= 7"
-						"ff >= 17"
-						"ie >= 8"
-						"ios 5"
-						"opera 12.1"
+					processors: [
+						require("autoprefixer")(
+							browsers: [
+								"last 2 versions"
+								"bb >= 10"
+								"Firefox ESR"
+								"ie > 10"
+							]
+						)
 					]
 				files: [
 					cwd: "<%= coreDist %>/css/polyfills"
@@ -711,12 +769,14 @@ module.exports = (grunt) ->
 
 		# Minify
 		uglify:
+			options:
+				preserveComments: (uglify,comment) ->
+					return comment.value.match /^!/i
+
 			polyfills:
 				options:
-					report: "min"
 					banner: "<%= banner %>"
-					preserveComments: (uglify,comment) ->
-						return comment.value.match(/^!/i)
+					sourceMap: true
 				expand: true
 				cwd: "<%= coreDist %>/js/polyfills/"
 				src: "*.js"
@@ -726,8 +786,6 @@ module.exports = (grunt) ->
 			demos:
 				options:
 					banner: "<%= banner %>"
-					preserveComments: (uglify,comment) ->
-						return comment.value.match(/^!/i)
 				expand: true
 				cwd: "dist/unmin/demos/"
 				src: "**/demo/*.js"
@@ -738,8 +796,7 @@ module.exports = (grunt) ->
 				options:
 					beautify:
 						quote_keys: true
-					preserveComments: (uglify,comment) ->
-						return comment.value.match(/^!/i)
+					sourceMap: true
 				cwd: "<%= coreDist %>/js/"
 				src: [
 					"*wet-boew*.js"
@@ -755,8 +812,6 @@ module.exports = (grunt) ->
 					beautify:
 						quote_keys: true
 						ascii_only: true
-					preserveComments: (uglify,comment) ->
-						return comment.value.match(/^!/i)
 				cwd: "<%= coreDist %>/js/"
 				src: [
 					"ie8*.js"
@@ -765,7 +820,6 @@ module.exports = (grunt) ->
 				dest: "<%= coreDist %>/js/"
 				ext: ".min.js"
 				expand: true
-
 
 			i18n:
 				options:
@@ -789,8 +843,8 @@ module.exports = (grunt) ->
 					"!*.min.js"
 				]
 				dest: "<%= coreDist %>/js/deps/"
-				rename: (destBase, destPath) ->
-					return destBase + destPath.replace(/\.js$/, ".min.js")
+				ext: ".min.js"
+				extDot: "last"
 
 		cssmin:
 			options:
@@ -859,26 +913,21 @@ module.exports = (grunt) ->
 			ajax:
 				options:
 					ignore: [
-						"XHTML element “head” is missing a required instance of child element “title”."
-						"The “details” element is not supported properly by browsers yet. It would probably be better to wait for implementations."
-						"The value of attribute “title” on element “a” from namespace “http://www.w3.org/1999/xhtml” is not in Unicode Normalization Form C." #required for vietnamese translations
-						"Text run is not in Unicode Normalization Form C." #required for vietnamese translations
+						"Element “head” is missing a required instance of child element “title”."
 					]
 				src: [
 					"dist/unmin/ajax/**/*.html"
 					"dist/unmin/demos/menu/demo/*.html"
-
 				]
+
 			ajaxFragments:
 				options:
 					ignore: [
-						"XHTML element “head” is missing a required instance of child element “title”."
-						"XHTML element “li” not allowed as child of XHTML element “body” in this context. (Suppressing further errors from this subtree.)"
-						"The “aria-controls” attribute must point to an element in the same document."
+						"Element “head” is missing a required instance of child element “title”."
+						"Element “li” not allowed as child of element “body” in this context. (Suppressing further errors from this subtree.)"
 						"The “details” element is not supported properly by browsers yet. It would probably be better to wait for implementations."
-						"The value of attribute “title” on element “a” from namespace “http://www.w3.org/1999/xhtml” is not in Unicode Normalization Form C." #required for vietnamese translations
-						"Text run is not in Unicode Normalization Form C." #required for vietnamese translations
 						"Start tag seen without seeing a doctype first. Expected “<!DOCTYPE html>”."
+						"Section lacks heading. Consider using “h2”-“h6” elements to add identifying headings to all sections."
 					]
 				src: [
 					"dist/unmin/demos/**/ajax/**/*.html"
@@ -889,12 +938,8 @@ module.exports = (grunt) ->
 					ignore: [
 						"The “details” element is not supported properly by browsers yet. It would probably be better to wait for implementations."
 						"The “date” input type is not supported in all browsers. Please be sure to test, and consider using a polyfill."
-						"The “track” element is not supported by browsers yet. It would probably be better to wait for implementations."
 						"The “time” input type is not supported in all browsers. Please be sure to test, and consider using a polyfill."
-						"The value of attribute “title” on element “a” from namespace “http://www.w3.org/1999/xhtml” is not in Unicode Normalization Form C." #required for vietnamese translations
-						"Text run is not in Unicode Normalization Form C." #required for vietnamese translations
 						"The “longdesc” attribute on the “img” element is obsolete. Use a regular “a” element to link to the description."
-						/Bad value “\.\/\.\.\/[^”]*” for attribute “[^”]*” on XHTML element “[^”]*”: Path component contains a segment “\/\.\.\/” not at the beginning of a relative reference, or it contains a “\/\.\/”. These should be removed./
 					]
 				src: [
 					"dist/unmin/**/*.html"
@@ -909,11 +954,15 @@ module.exports = (grunt) ->
 				options:
 					relaxerror: [
 						# We recommend handling this through the server headers so it never appears in the markup
-						"<head> is missing X-UA-Compatible <meta> tag that disables old IE compatibility modes"
+						"W002" # `<head>` is missing X-UA-Compatible `<meta>` tag that disables old IE compatibility modes
+						"W005" # Unable to locate jQuery, which is required for Bootstrap's JavaScript plugins to work; however, you might not be using Bootstrap's JavaScript
 						# TODO: The rules below should be resolved
-						"Only columns (.col-*-*) may be children of `.row`s"
-						"Unable to locate jQuery, which is required for Bootstrap's JavaScript plugins to work"
-						"Columns (.col-*-*) can only be children of `.row`s or `.form-group`s"
+						"W009" # Using empty spacer columns isn't necessary with Bootstrap's grid. So instead of having an empty grid column with `class="col-xs-12"` , just add `class="col-xs-offset-12"` to the next grid column.
+						"W010" # Using `.pull-left` or `.pull-right` as part of the media object component is deprecated as of Bootstrap v3.3.0. Use `.media-left` or `.media-right` instead.
+						"E013" # Only columns (`.col-*-*`) may be children of `.row`s
+						"E014" # Columns (`.col-*-*`) can only be children of `.row`s or `.form-group`s
+						"E031" # Glyphicon classes must only be used on elements that contain no text content and have no child elements.
+						"E032" # `.modal-content` must be a child of `.modal-dialog`
 					]
 				src: [
 					"dist/**/*.html"
@@ -930,46 +979,47 @@ module.exports = (grunt) ->
 					"<%= themeDist %>/**/ie8*.min.css"
 				]
 
-		modernizr:
-			dist:
-				devFile: "lib/modernizr/modernizr-custom.js"
-				outputFile: "lib/modernizr/modernizr-custom.js"
-				extra:
-					shiv: false
-					printshiv: false
-					load: true
-					mq: true
-					css3: true
-					input: true
-					inputtypes: true
-					svg: true
-					html5: false
-					cssclasses: true
-					csstransitions: true
-					fontface: true
-					backgroundsize: true
-					borderimage: true
-				extensibility:
-					addtest: false
-					prefixed: false
-					teststyles: true
-					testprops: true
-					testallprops: true
-					hasevents: true
-					prefixes: true
-					domprefixes: true
-				tests: [
-					"elem_details"
-					"elem_progress_meter"
-					"mathml"
-					"cors"
-				]
-				parseFiles: false
-				matchCommunityTests: false
+# Remove modernizr temp
+#		modernizr:
+#			dist:
+#				devFile: "lib/modernizr/modernizr-custom.js"
+#				outputFile: "lib/modernizr/modernizr-custom.js"
+#				extra:
+#					shiv: false
+#					printshiv: false
+#					load: true
+#					mq: true
+#					css3: true
+#					input: true
+#					inputtypes: true
+#					svg: true
+#					html5: false
+#					cssclasses: true
+#					csstransitions: true
+#					fontface: true
+#					backgroundsize: true
+#					borderimage: true
+#				extensibility:
+#					addtest: false
+#					prefixed: false
+#					teststyles: true
+#					testprops: true
+#					testallprops: true
+#					hasevents: true
+#					prefixes: true
+#					domprefixes: true
+#				tests: [
+#					"elem_details"
+#					"elem_progress_meter"
+#					"mathml"
+#					"cors"
+#				]
+#				parseFiles: false
+#				matchCommunityTests: false
 
 		copy:
 			bootstrap:
-				cwd: "lib/bootstrap-sass-official/assets/fonts/bootstrap"
+				cwd: "node_modules/bootstrap-sass/assets/fonts/bootstrap"
 				src: "*.*"
 				dest: "<%= coreDist %>/fonts"
 				expand: true
@@ -1009,24 +1059,56 @@ module.exports = (grunt) ->
 				,
 					cwd: "lib"
 					src: [
-						"jquery-pjax/jquery.pjax.js"
 						"flot/jquery.flot.js"
 						"flot/jquery.flot.pie.js"
 						"flot/jquery.flot.canvas.js"
 						"SideBySideImproved/jquery.flot.orderBars.js"
-						"jquery-validation/dist/jquery.validate.js"
-						"jquery-validation/dist/additional-methods.js"
-						"magnific-popup/dist/jquery.magnific-popup.js"
-						"google-code-prettify/src/*.js"
-						"DataTables/media/js/jquery.dataTables.js"
-						"proj4/dist/proj4.js"
 						"openlayers/OpenLayers.debug.js"
 					]
 					dest: "<%= coreDist %>/js/deps"
 					rename: (dest, src) ->
-						return dest + "/" + src.replace( ".debug", "" )
+						return dest + "/" + src.replace ".debug", ""
 					expand: true
 					flatten: true
+				,
+					cwd: "node_modules"
+					src: [
+						"code-prettify/src/*.js"
+						"datatables/media/js/jquery.dataTables.js"
+						"jquery-validation/dist/jquery.validate.js"
+						"jquery-validation/dist/additional-methods.js"
+						"magnific-popup/dist/jquery.magnific-popup.js"
+						"proj4/dist/proj4.js"
+						"unorm/lib/unorm.js"
+					]
+					dest: "<%= coreDist %>/js/deps"
+					rename: (dest, src) ->
+						return dest + "/" + src.replace ".debug", ""
+					expand: true
+					flatten: true
+				,
+					cwd: "node_modules/mathjax"
+					src: [
+						"MathJax.js"
+						"config/**"
+						"extensions/**"
+						"jax/**"
+						"localization/**"
+						"fonts/HTML-CSS/TeX/woff/**"
+						"fonts/HTML-CSS/TeX/otf/**"
+					]
+					dest: "<%= coreDist %>/js/MathJax/"
+					expand: true
+				,
+					cwd: "node_modules/jquery/dist"
+					src: "*.*"
+					dest: "<%= coreDist %>/js/jquery/<%= jqueryVersion %>"
+					expand: true
+				,
+					cwd: "lib/jquery-oldIE/dist"
+					src: "*.*"
+					dest: "<%= coreDist %>/js/jquery/<%= jqueryOldIEVersion %>"
+					expand: true
 				,
 					cwd: "src"
 					src: [
@@ -1123,13 +1205,13 @@ module.exports = (grunt) ->
 						dest: "dist"
 						expand: true
 					}
-					
+
 					{
 						src: "*.txt"
 						dest: "<%= coreDist %>"
 						expand: true
 					}
-					
+
 					{
 						src: "*.txt"
 						dest: "<%= themeDist %>"
@@ -1162,29 +1244,23 @@ module.exports = (grunt) ->
 				#TODO: Remove in v4.1
 				options:
 					noProcess: [
-						'**/*.{png,gif,jpg,ico,ttf,otf,woff,svg,swf}'
+						'**/*.{png,gif,jpg,ico,ttf,eot,otf,woff,svg,swf}'
 					]
 					process: (content, filepath) ->
-						if filepath.match(/\.css/)
-							return content.replace(/\.\.\/\.\.\/wet-boew\/(assets|fonts)/g, '../$1')
+						if filepath.match /\.css/
+							return content.replace /\.\.\/\.\.\/wet-boew\/(assets|fonts)/g, '../$1'
 						content
 
-		imagemin:
-			all:
-				cwd: "dist/"
-				src: "**/*.png"
-				dest: "dist/"
-				expand: true
-
-		clean:
-			dist: ["dist", "src/base/partials/*sprites*"]
 
 		watch:
 			options:
 				livereload: true
 			js:
-				files: "<%= jshint.all.src %>"
-				tasks: "js"
+				files: "<%= eslint.all.src %>"
+				tasks: [
+					"js"
+					"string-replace"
+				]
 			css:
 				files: [
 					"src/**/*.scss"
@@ -1201,26 +1277,15 @@ module.exports = (grunt) ->
 				files: "site/pages/docs/**/*.hbs"
 				tasks: "pages:docs"
 
-		jshint:
+		eslint:
 			options:
-				jshintrc: ".jshintrc"
-
+				configFile: if process.env.CI == "true" then ".eslintrc.ci.json" else ".eslintrc.json"
+				quiet: true
 			all:
 				src: [
 					"src/**/*.js"
 					"theme/**/*.js"
 					"tasks/*.js"
-				]
-
-		jscs:
-			all:
-				options:
-					config: ".jscsrc"
-
-				src: [
-					"<%= jshint.all.src %>"
-					"!src/polyfills/slider/slider.js",
-					"!src/polyfills/events/mobile.js"
 				]
 
 		connect:
@@ -1234,20 +1299,20 @@ module.exports = (grunt) ->
 						globalConnectMiddleware connect, middlewares
 
 						middlewares.unshift (req, res, next) ->
-							req.url = req.url.replace( "/v4.0-ci/", "/" )
+							req.url = req.url.replace "/v4.0-ci/", "/"
 							next()
 
 						# Serve the custom error page
 						middlewares.push (req, res) ->
 							filename = options.base + req.url
 
-							if not grunt.file.exists( filename )
+							if not grunt.file.exists filename
 								filename = options.base + "/404.html"
 
 								# Set the status code manually
 								res.statusCode = 404
 
-							res.end( grunt.file.read( filename ) )
+							res.end( grunt.file.read filename )
 
 						middlewares
 
@@ -1281,7 +1346,7 @@ module.exports = (grunt) ->
 			options:
 				urls: "<%= mocha.all.options.urls %>"
 				throttled: 3
-				browsers: grunt.file.readJSON "browsers.json"
+				browsers: @file.readJSON "browsers.json"
 				tunnelArgs: [
 					"-D"
 					"ajax.googleapis.com"
@@ -1305,6 +1370,15 @@ module.exports = (grunt) ->
 				options:
 					testname: "Local Test - <%= grunt.template.today('yyyy-mm-dd hh:MM') %>"
 
+		"string-replace":
+			inline:
+				files:
+					"dist/wet-boew/js/": "dist/wet-boew/js/*.js"
+				options:
+					replacements: [
+						pattern: "WET_BOEW_VERSION_MATHJAX"
+						replacement: "<%= MathJaxVersion %>"
+					]
 
 		"gh-pages":
 			options:
@@ -1315,13 +1389,7 @@ module.exports = (grunt) ->
 				options:
 					repo: process.env.DIST_REPO
 					branch: "<%= deployBranch %>"
-					message: ((
-						if process.env.TRAVIS_TAG
-							"Production files for the " + process.env.TRAVIS_TAG + " maintenance release"
-						else
-							"Travis build " + process.env.TRAVIS_BUILD_NUMBER
-					))
-					silent: true,
+					message: "<%= distDeployMessage %>"
 					tag: ((
 						if process.env.TRAVIS_TAG then process.env.TRAVIS_TAG else false
 					))
@@ -1335,35 +1403,23 @@ module.exports = (grunt) ->
 					branch: "<%= deployBranch %>"
 					clone: "wet-boew-cdn"
 					base: "<%= coreDist %>"
-					message: ((
-						if process.env.TRAVIS_TAG
-							"CDN files for the " + process.env.TRAVIS_TAG + " maintenance release"
-						else
-							"Travis build " + process.env.TRAVIS_BUILD_NUMBER
-					))
-					silent: true,
+					message: "<%= cdnDeployMessage %>"
 					tag: ((
 						if process.env.TRAVIS_TAG then process.env.TRAVIS_TAG else false
 					))
 				src: [
 					"**/*.*"
 				]
-				
+
 			travis_theme_cdn:
 				options:
 					repo: process.env.THEME_CDN_REPO
 					branch: "theme-wet-boew"
 					clone: "wet-boew-theme-cdn"
 					base: "<%= themeDist %>"
-					message: ((
-						if process.env.TRAVIS_TAG
-							"CDN files for the " + process.env.TRAVIS_TAG + " maintenance release"
-						else
-							"Travis build " + process.env.TRAVIS_BUILD_NUMBER
-					))
-					silent: true,
+					message: "<%= cdnDeployMessage %>"
 					tag: ((
-						if process.env.TRAVIS_TAG then process.env.TRAVIS_TAG else false
+						if process.env.TRAVIS_TAG then process.env.TRAVIS_TAG + "-theme-wet-boew" else false
 					))
 				src: [
 					"**/*.*"
@@ -1379,46 +1435,39 @@ module.exports = (grunt) ->
 				options:
 					repo: process.env.DEMOS_REPO
 					branch: process.env.DEMOS_BRANCH
-					message: "<%= grunt.config('gh-pages.travis.options.message') %>"
-					silent: true
+					message: "<%= distDeployMessage %>"
 
-		checkDependencies:
+		sri:
+			options:
+				pretty: true
+			wet_boew:
+				options:
+					dest: "<%= coreDist %>/payload.json"
+				cwd: "<%= coreDist %>"
+				src: [
+					"{js,css}/**/*.{js,css}"
+				]
+				expand: true
+			theme:
+				options:
+					dest: "<%= themeDist %>/payload.json"
+				cwd: "<%= themeDist %>"
+				src: [
+					"{js,css}/*.{js,css}"
+				]
+				expand: true
+
+		markdownlint:
 			all:
 				options:
-					npmInstall: false
+					config: grunt.file.readJSON(".markdownlint.json")
+				src: [
+					'**/*.md'
+					'!node_modules/**/*.md'
+					'!lib/**/*.md'
+				]
 
-	# These plugins provide necessary tasks.
-	@loadNpmTasks "assemble"
-	@loadNpmTasks "grunt-autoprefixer"
-	@loadNpmTasks "grunt-banner"
-	@loadNpmTasks "grunt-bootlint"
-	@loadNpmTasks "grunt-check-dependencies"
-	@loadNpmTasks "grunt-contrib-clean"
-	@loadNpmTasks "grunt-contrib-concat"
-	@loadNpmTasks "grunt-contrib-connect"
-	@loadNpmTasks "grunt-contrib-copy"
-	@loadNpmTasks "grunt-contrib-csslint"
-	@loadNpmTasks "grunt-contrib-cssmin"
-	@loadNpmTasks "grunt-contrib-htmlmin"
-	@loadNpmTasks "grunt-contrib-imagemin"
-	@loadNpmTasks "grunt-contrib-jshint"
-	@loadNpmTasks "grunt-contrib-uglify"
-	@loadNpmTasks "grunt-contrib-watch"
-	@loadNpmTasks "grunt-cssmin-ie8-clean"
-	@loadNpmTasks "grunt-gh-pages"
-	@loadNpmTasks "grunt-html"
-	@loadNpmTasks "grunt-i18n-csv"
-	@loadNpmTasks "grunt-imagine"
-	@loadNpmTasks "grunt-jscs"
-	@loadNpmTasks "grunt-mocha"
-	@loadNpmTasks "grunt-modernizr"
-	@loadNpmTasks "grunt-sass"
-	@loadNpmTasks "grunt-saucelabs"
-	@loadNpmTasks "grunt-wget"
-	@loadNpmTasks "grunt-wet-boew-postbuild"
-
-	# Load custom grunt tasks form the tasks directory
-	@loadTasks "tasks"
+	require( "load-grunt-tasks" )( grunt, requireResolution: true )
 
 	require( "time-grunt" )( grunt )
 	@

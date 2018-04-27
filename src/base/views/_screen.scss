@@ -6,6 +6,36 @@
 	display: none !important;
 }
 
+%content-background-color {
+	background-color: $content-bg;
+}
+
+@if $content-bg {
+	body {
+		> {
+			header {
+				+ {
+					div {
+						&.container {
+							@extend %content-background-color;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+@if $main-bg {
+	main {
+		background-color: $main-bg;
+	}
+} @else if $content-bg {
+	main {
+		@extend %content-background-color;
+	}
+}
+
 /* Hide MathML check */
 .mathml,
 .no-mathml {
@@ -49,4 +79,17 @@
 	.nojs-hide {
 		@extend %display-none-important;
 	}
+}
+
+// Column auto (col-auto) extension for Bootstrap grid
+// Baseline style for column auto - same style as defined in: assets/stylesheets/bootstrap/mixins/_grid-framework.scss
+.col-xs-auto, .col-sm-auto, .col-md-auto, .col-lg-auto {
+	min-height: 1px;
+	padding-left:  ($grid-gutter-width / 2);
+	padding-right: ($grid-gutter-width / 2);
+	position: relative;
+}
+
+.col-xs-auto {
+	width: auto;
 }

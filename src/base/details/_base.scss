@@ -27,29 +27,16 @@ summary {
 
 details {
 	padding-left: $details-identation;
-
-	&[open] {
-		padding-bottom: 1em;
-	}
+	padding-right: $details-identation;
 
 	> {
 		summary {
 			margin-left: -$details-identation;
+			margin-right: -$details-identation;
 		}
 	}
-}
 
-[dir=rtl] {
-	details {
-		padding-left: 0;
-		padding-right: $details-identation;
-
-		> {
-
-			summary {
-				margin-left: 0;
-				margin-right: -$details-identation;
-			}
-		}
+	&[open] {
+		padding-bottom: 1em;
 	}
 }

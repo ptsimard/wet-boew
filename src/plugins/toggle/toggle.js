@@ -84,7 +84,7 @@ var componentName = "wb-toggle",
 			hasOpen = false;
 
 		// Group toggle elements with a parent are assumed to be a tablist
-		if ( data.group != null && data.parent != null ) {
+		if ( data.group != null && data.parent != null ) { //eslint-disable-line no-eq-null
 			parent = document.querySelector( data.parent );
 
 			// Check that the tablist widget hasn't already been initialized
@@ -290,11 +290,12 @@ var componentName = "wb-toggle",
 	 * @param {Object} data Simple key/value data object passed when the event was triggered
 	 */
 	toggleDetails = function( event, data ) {
-		if ( event.namespace === componentName ) {
+		if ( event.namespace === componentName && event.target === event.currentTarget ) {
 			var top,
 				isOn = data.isOn,
 				$elms = data.elms,
-				$detail = $( this );
+				$this = $( this ),
+				$detail = $this.is( "summary" ) ? $this.parent() : $this;
 
 			// Stop propagation of the toggleDetails event
 			if ( event.stopPropagation ) {
@@ -303,15 +304,7 @@ var componentName = "wb-toggle",
 				event.cancelBubble = true;
 			}
 
-			// Native details support
 			$detail.prop( "open", isOn );
-
-			// Polyfill details support
-			if ( !Modernizr.details ) {
-				$detail
-					.attr( "open", isOn ? null : "open" )
-					.find( "summary" ).trigger( "toggle.wb-details" );
-			}
 
 			if ( data.isTablist ) {
 
@@ -423,7 +416,7 @@ var componentName = "wb-toggle",
 
 // Bind the plugin's events
 $document.on( "timerpoke.wb " + initEvent + " " + toggleEvent +
-	" click", selector, function( event, data ) {
+" click", selector, function( event, data ) {
 
 	var eventType = event.type;
 
@@ -443,7 +436,7 @@ $document.on( "timerpoke.wb " + initEvent + " " + toggleEvent +
 	}
 } );
 
-$document.on( toggledEvent, "details", toggleDetails );
+$document.on( toggledEvent, "summary, details", toggleDetails );
 
 // Keyboard handling for the accordion
 $document.on( "keydown", selectorTab, function( event ) {

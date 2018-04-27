@@ -6,7 +6,7 @@
 	"categoryfile": "plugins",
 	"description": "Provides generic validation and error message handling for Web forms.",
 	"altLangPrefix": "formvalid",
-	"dateModified": "2014-10-28"
+	"dateModified": "2015-07-22"
 }
 ---
 <span class="wb-prettify all-pre hide"></span>
@@ -42,7 +42,7 @@
 		</li>
 		<li><strong>Optional:</strong> Wrap each form field name with <code>&lt;span class="field-name"&gt;...&lt;/span&gt;</code>. This specifies the prefix to use for the error message summary.
 			<pre><code>&lt;label for="fname1"&gt;
-	&lt;span class="field-name"&gt;First Name&lt;/span&gt; &lt;strong>(required)&lt;/strong&gt;
+	&lt;span class="field-name"&gt;First Name&lt;/span&gt; &lt;strong class="required">(required)&lt;/strong&gt;
 &lt;/label&gt;</code></pre>
 		</li>
 		<li>Add <code>required="required"</code> to each mandatory form field
@@ -116,6 +116,14 @@
 					<td>Alphanumeric</td>
 				</tr>
 				<tr>
+					<td><code>data-rule-cifES="true"</code></td>
+					<td>CIF code (Spain)</td>
+				</tr>
+				<tr>
+					<td><code>data-rule-creditcard="true"</code></td>
+					<td>Credit card number</td>
+				</tr>
+				<tr>
 					<td><code>type="date"</code></td>
 					<td>Date</td>
 				</tr>
@@ -124,8 +132,20 @@
 					<td>Date (ISO)</td>
 				</tr>
 				<tr>
+					<td><code>type="date" data-rule-dateITA="true"</code></td>
+					<td>Date (Italy)</td>
+				</tr>
+				<tr>
 					<td><code>type="number"</code></td>
 					<td>Digits only</td>
+				</tr>
+				<tr>
+					<td><code>type="email"</code></td>
+					<td>Email</td>
+				</tr>
+				<tr>
+					<td><code>data-rule-equalTo="#x"</code></td>
+					<td>Equal to field with id = "x"</td>
 				</tr>
 				<tr>
 					<td><code>data-rule-lettersonly="true"</code></td>
@@ -144,20 +164,60 @@
 					<td>Maximum number x</td>
 				</tr>
 				<tr>
+					<td><code>data-rule-maxWords="x"</code></td>
+					<td>Maximum of x words</td>
+				</tr>
+				<tr>
 					<td><code>data-rule-minlength="x"</code></td>
 					<td>Minimum length of x</td>
+				</tr>
+				<tr>
+					<td><code>data-rule-strippedminlength="x"</code></td>
+					<td>Minimum length of x (when HTML tags are removed)</td>
 				</tr>
 				<tr>
 					<td><code>min="x"</code></td>
 					<td>Minimum number x</td>
 				</tr>
 				<tr>
-					<td><code>type="email"</code></td>
-					<td>Email</td>
+					<td><code>data-rule-minWords="x"</code></td>
+					<td>Minimum of x words</td>
+				</tr>
+				<tr>
+					<td><code>data-rule-nieES="true"</code></td>
+					<td>NIE code (Spain)</td>
+				</tr>
+				<tr>
+					<td><code>data-rule-nifES="true"</code></td>
+					<td>NIF code (Spain)</td>
+				</tr>
+				<tr>
+					<td><code>data-rule-nowhitespace="true"</code></td>
+					<td>No white space</td>
+				</tr>
+				<tr>
+					<td><code>data-rule-postalCodeCA="true"</code></td>
+					<td>Postal code (Canada)</td>
+				</tr>
+				<tr>
+					<td><code>data-rule-rangelength="[x,y]"</code></td>
+					<td>Range (number)</td>
 				</tr>
 				<tr>
 					<td><code>data-rule-rangelength="[x,y]"</code></td>
 					<td>Range length x to y</td>
+				</tr>
+				<tr>
+					<td><code>data-rule-rangeWords="[x,y]"</code></td>
+					<td>Range of x to y words</td>
+				</tr>
+				<tr>
+					<td><code>type="tel" data-rule-phoneUK="true"</code></td>
+					<td>Telephone number (UK)</td>
+				</tr>
+				<tr>
+					<td><code>type="tel" data-rule-mobileUK="true"</code></td>
+					<td>Mobile number (UK)</td>
 				</tr>
 				<tr>
 					<td><code>type="tel" data-rule-phoneUS="true"</code></td>
@@ -174,6 +234,20 @@
 				<tr>
 					<td><code>type="url" data-rule-ipv6="true"</code></td>
 					<td>URL (IPv6)</td>
+				</tr>
+				<tr>
+					<td><code>type="url" data-rule-url2="true"</code></td>
+					<td>URL (TLD optional)</td>
+				</tr>
+				<tr>
+					<td><code>data-rule-vinUS="true"</code></td>
+					<td>Vehice Identification Number (VIN, US)</td>
+				</tr>
+				<tr>
+					<td><code>data-rule-require_from_group='[1,".group"]'</code></td>
+					<td>Validates the minimum number of fields within an group (each input requires the validation rule).
+						<br/>The minium and group is defined by the options passed (number being the minium and a common class for each input).
+					</td>
 				</tr>
 			</tbody>
 		</table>
@@ -211,7 +285,7 @@
 			<tr>
 				<td><code>wb-ready.wb</code> (v4.0.5+)</td>
 				<td>Triggered automatically when WET has finished loading and executing.</td>
-				<td>Used to identify when all WET plugins and polyfills have finished loading and executing. 
+				<td>Used to identify when all WET plugins and polyfills have finished loading and executing.
 					<pre><code>$( document ).on( "wb-ready.wb", function( event ) {
 });</code></pre>
 				</td>

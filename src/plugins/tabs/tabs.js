@@ -22,8 +22,6 @@ var componentName = "wb-tabs",
 	setFocusEvent = "setfocus.wb",
 	controls = selector + " ul[role=tablist] a, " + selector + " ul[role=tablist] .tab-count",
 	initialized = false,
-	equalHeightClass = "wb-eqht",
-	equalHeightOffClass = equalHeightClass + "-off",
 	tabsAccordionClass = "tabs-acc",
 	nestedTglPanelSelector = "> .tabpanels > details > .tgl-panel",
 	activePanel = "-activePanel",
@@ -53,12 +51,12 @@ var componentName = "wb-tabs",
 		// returns DOM object = proceed with init
 		// returns undefined = do not proceed with init (e.g., already initialized)
 		var elm = wb.init( event, componentName, selector ),
-			hashFocus = false,
 			isCarousel = true,
 			open = "open",
-			$panels, $tablist, activeId, $openPanel, $elm, elmId,
-			settings, $panel, i, len, tablist, isOpen,
-			newId, positionY, groupClass, $tabPanels;
+			hashTargetLen = 0,
+			$panels, $tablist, activeId, $openPanel, $elm, elmId, $hashTarget,
+			settings, $panel, i, len, tablist, isOpen, hashFocus,
+			newId, positionY, groupClass, $tabPanels, openByHash;
 
 		if ( elm ) {
 			$elm = $( elm );
@@ -71,8 +69,18 @@ var componentName = "wb-tabs",
 			$panels = $elm.find( "> .tabpanels > [role=tabpanel], > .tabpanels > details" );
 			$tablist = $elm.children( "[role=tablist]" );
 			isCarousel = $tablist.length !== 0;
+
+			// If a carousel contains only 1 panel, remove its controls, visually-hide its thumbnails and prevent it from attempting to play
+			if ( isCarousel && $panels.length === 1 ) {
+
+				$elm.removeClass( "show-thumbs playing" );
+				$elm.addClass( "exclude-controls" );
+			}
+
 			activeId = wb.jqEscape( wb.pageUrlParts.hash.substring( 1 ) );
-			$openPanel = activeId.length !== 0 ? $panels.filter( "#" + activeId ) : undefined;
+			hashFocus = activeId.length !== 0;
+			$openPanel = hashFocus ? $panels.filter( "#" + activeId ) : undefined;
+			openByHash = $openPanel && $openPanel.length !== 0;
 			elmId = elm.id;
 
 			settings = $.extend(
@@ -83,6 +91,7 @@ var componentName = "wb-tabs",
 					interval: $elm.hasClass( "slow" ) ?
 								9 : $elm.hasClass( "fast" ) ?
 									3 : defaults.interval,
+					excludeControls: $elm.hasClass( "exclude-controls" ),
 					excludePlay: $elm.hasClass( "exclude-play" ),
 					updateHash: $elm.hasClass( "update-hash" ),
 					playing: $elm.hasClass( "playing" ),
@@ -94,19 +103,30 @@ var componentName = "wb-tabs",
 
 			try {
 
-				// If the panel was not set by URL hash, then attempt to
-				// retrieve from sessionStorage
-				if ( !$openPanel || $openPanel.length === 0 ) {
-					if ( !settings.ignoreSession ) {
-						activeId = sessionStorage.getItem( pagePath + elmId + activePanel );
+				// If the panel was not set by URL hash
+				if ( !openByHash ) {
+					if ( hashFocus ) {
+						$hashTarget = $panels.find( "#" + activeId );
+						hashTargetLen = $hashTarget.length;
 					}
+
+					// If the anchor target is within a panel, then open that panel
+					if ( hashTargetLen !== 0 ) {
+						activeId = $hashTarget.closest( "[role=tabpanel]" ).attr( "id" );
+
+					// Attempt to retrieve active panel from sessionStorage
+					} else {
+						if ( !settings.ignoreSession ) {
+							activeId = sessionStorage.getItem( pagePath + elmId + activePanel );
+						}
+					}
+
 					if ( activeId ) {
 						$openPanel = $panels.filter( "#" + activeId );
 					}
 
 				// If the panel was set by URL hash, then store in sessionStorage
 				} else {
-					hashFocus = true;
 					if ( !settings.ignoreSession ) {
 						try {
 							sessionStorage.setItem( pagePath + elmId + activePanel, activeId );
@@ -187,7 +207,7 @@ var componentName = "wb-tabs",
 							open: open
 						} );
 						$panel.addClass( ( Modernizr.details ? "" :  open + " " ) +
-							"fade " + ( isOpen ? "in" : "out wb-inv" ) );
+							"fade " + ( isOpen ? "in" : "noheight out wb-inv" ) );
 					}
 
 					tablist += "<li" + ( isOpen ? " class='active'" : "" ) +
@@ -207,11 +227,11 @@ var componentName = "wb-tabs",
 					.trigger( "wb-init.wb-toggle" );
 			} else if ( $openPanel && $openPanel.length !== 0 ) {
 				$panels.filter( ".in" )
-					.addClass( "out" )
+					.addClass( "out noheight" )
 					.removeClass( "in" );
 				$openPanel
 					.addClass( "in" )
-					.removeClass( "out" );
+					.removeClass( "out noheight" );
 				$tablist.find( ".active" )
 					.removeClass( "active" );
 				$tablist.find( "a" )
@@ -233,13 +253,22 @@ var componentName = "wb-tabs",
 			}
 
 			// If focus is being set by the URL hash, then ensure the tabs are
-			// not above the top of the viewport
+			// not above the top of the viewport (if the panel was the target),
+			// or the anchor is not above the top of viewport (if the anchor was
+			// the target)
 			if ( hashFocus ) {
 
 				// Need a slight delay to allow for the reflow
 				setTimeout( function() {
-					positionY = $tablist.offset().top;
-					if ( positionY < document.body.scrollTop ) {
+					if ( openByHash ) {
+						positionY = $tablist.offset().top;
+					} else if ( hashTargetLen !== 0 ) {
+						positionY = $hashTarget.offset().top;
+					} else {
+						positionY = -1;
+					}
+
+					if ( positionY !== -1 && positionY < document.body.scrollTop ) {
 						document.body.scrollTop = positionY;
 					}
 				}, 1 );
@@ -295,8 +324,9 @@ var componentName = "wb-tabs",
 		var prevText = i18nText.prev,
 			nextText = i18nText.next,
 			spaceText = i18nText.space,
+			excludeControls = settings.excludeControls,
 			excludePlay = settings.excludePlay,
-			isPlaying = !excludePlay && settings.playing,
+			isPlaying = !excludeControls && !excludePlay && settings.playing,
 			state = isPlaying ? i18nText.pause : i18nText.play,
 			hidden = isPlaying ? i18nText.rotStop : i18nText.rotStart,
 			glyphiconStart = "<span class='glyphicon glyphicon-",
@@ -329,8 +359,11 @@ var componentName = "wb-tabs",
 				"</span>" + wbInvStart + spaceText + i18nText.hyphen + spaceText +
 				hidden + btnEnd;
 
-		$tablist.prepend( prevControl + tabCount + nextControl );
-		if ( !excludePlay ) {
+		if ( !excludeControls ) {
+			$tablist.prepend( prevControl + tabCount + nextControl );
+		}
+
+		if ( !excludeControls && !excludePlay ) {
 			$tablist.append( playControl );
 		}
 
@@ -428,7 +461,7 @@ var componentName = "wb-tabs",
 
 		$currPanel
 			.removeClass( "in" )
-			.addClass( "out" )
+			.addClass( "out noheight" )
 			.attr( {
 				"aria-hidden": "true",
 				"aria-expanded": "false"
@@ -443,7 +476,7 @@ var componentName = "wb-tabs",
 		}
 
 		$next
-			.removeClass( "out" )
+			.removeClass( "out noheight" )
 			.addClass( "in" )
 			.attr( {
 				"aria-hidden": "false",
@@ -600,7 +633,7 @@ var componentName = "wb-tabs",
 
 								$detailsElm
 									.removeAttr( "role aria-expanded aria-hidden" )
-									.removeClass( "fade out in" )
+									.removeClass( "fade out noheight in" )
 									.toggleClass( "open", isActive );
 
 								$panelElm
@@ -637,7 +670,7 @@ var componentName = "wb-tabs",
 									open: "open"
 								} )
 								.not( $openDetails )
-									.addClass( "fade out wb-inv" )
+									.addClass( "fade out noheight wb-inv" )
 									.attr( {
 										"aria-hidden": "true",
 										"aria-expanded": "false"
@@ -648,14 +681,9 @@ var componentName = "wb-tabs",
 							$openDetails
 								.addClass( "fade in" )
 								.attr( {
-										"aria-hidden": "false",
-										"aria-expanded": "true"
-									} );
-						}
-
-						// Enable equal heights for large view or disable for small view
-						if ( isSmallView !== $elm.hasClass( equalHeightOffClass ) ) {
-							$elm.toggleClass( equalHeightClass + " " + equalHeightOffClass );
+									"aria-hidden": "false",
+									"aria-expanded": "true"
+								} );
 						}
 
 						$summary.attr( "aria-hidden", !isSmallView );
@@ -698,58 +726,58 @@ var componentName = "wb-tabs",
 		}
 	};
 
- // Bind the init event of the plugin
- $document.on( "timerpoke.wb " + initEvent + " " + shiftEvent + " " + selectEvent, selector, function( event ) {
+// Bind the init event of the plugin
+$document.on( "timerpoke.wb " + initEvent + " " + shiftEvent + " " + selectEvent, selector, function( event ) {
 	var eventTarget = event.target,
 		eventCurrentTarget = event.currentTarget,
 		$elm;
 
-		// Filter out any events triggered by descendants
-		if ( eventCurrentTarget === eventTarget ) {
-			switch ( event.type ) {
-			case "timerpoke":
-				$elm = $( eventTarget );
-				if ( !$elm.hasClass( componentName + "-inited" ) ) {
-					init( event );
-				} else if ( $elm.hasClass( "playing" ) ) {
-					onTimerPoke( $elm );
-				}
-				break;
-
-			/*
-			 * Init
-			 */
-			case "wb-init":
+	// Filter out any events triggered by descendants
+	if ( eventCurrentTarget === eventTarget ) {
+		switch ( event.type ) {
+		case "timerpoke":
+			$elm = $( eventTarget );
+			if ( !$elm.hasClass( componentName + "-inited" ) ) {
 				init( event );
-				break;
-
-			/*
-			 * Change tab panels by a delta
-			 */
-			case "wb-shift":
-				onShift( event, $( eventTarget ) );
-				break;
-
-			/*
-			 * Select a specific tab panel
-			 */
-			case "wb-select":
-				onSelect( event.id );
-				break;
+			} else if ( $elm.hasClass( "playing" ) ) {
+				onTimerPoke( $elm );
 			}
+			break;
+
+		/*
+		 * Init
+		 */
+		case "wb-init":
+			init( event );
+			break;
+
+		/*
+		 * Change tab panels by a delta
+		 */
+		case "wb-shift":
+			onShift( event, $( eventTarget ) );
+			break;
+
+		/*
+		 * Select a specific tab panel
+		 */
+		case "wb-select":
+			onSelect( event.id );
+			break;
 		}
+	}
 
 	/*
 	 * Since we are working with events we want to ensure that we are being passive about our control,
 	 * so returning true allows for events to always continue
 	 */
 	return true;
- } );
+} );
 
- /*
-  * Tabs, next, previous and play/pause
-  */
- $document.on( activateEvent, controls, function( event ) {
+/*
+ * Tabs, next, previous and play/pause
+ */
+$document.on( activateEvent, controls, function( event ) {
 	var which = event.which,
 		elm = event.currentTarget,
 		className = elm.className,
@@ -773,7 +801,7 @@ var componentName = "wb-tabs",
 		$elm = $( elm );
 		$sldr = $elm.closest( selector );
 		sldrId = $sldr[ 0 ].id;
-		isPlaying = $sldr.hasClass( "playing" ),
+		isPlaying = $sldr.hasClass( "playing" );
 		isPlayPause = className.indexOf( "plypause" ) !== -1;
 
 		// Reset ctime to 0

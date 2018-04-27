@@ -82,6 +82,13 @@
 }
 
 /*
+ *	Removes bold from elements
+ */
+.fnt-nrml {
+	font-weight: normal;
+}
+
+/*
  *	Fix for missing bullets in Chrome and Safari
  */
 [class*=clmn-] {
@@ -242,8 +249,12 @@
 	border-bottom-width: 1px;
 }
 
+.brdr-0 {
+	border: 0 !important;
+}
+
 .brdr-rds-0 {
-	border-radius: 0;
+	border-radius: 0 !important;
 }
 
 .tbl-gridify {

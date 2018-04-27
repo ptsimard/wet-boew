@@ -71,6 +71,9 @@ var componentName = "wb-frmvld",
 					"site!deps/jquery.validate" + modeJS,
 					"site!deps/additional-methods" + modeJS
 				],
+				testReady: function() {
+					return ( window.fromValid && window.fromValid.additional );
+				},
 				complete: function() {
 					var $elm = $( "#" + elmId ),
 						$form = $elm.find( "form" ),
@@ -138,6 +141,7 @@ var componentName = "wb-frmvld",
 						// In this case we will place them in the associated label element
 						errorPlacement: function( $error, $element ) {
 							var type = $element.attr( "type" ),
+								group = $element.attr( "data-rule-require_from_group" ),
 								$fieldset, $legend;
 
 							$error.data( "element-id", $element.attr( "id" ) );
@@ -154,6 +158,35 @@ var componentName = "wb-frmvld",
 									}
 								}
 							}
+
+							if ( group ) {
+								$fieldset = $element.closest( "fieldset" );
+								if ( $fieldset.length !== 0 ) {
+									$legend = $fieldset.find( "legend" ).first();
+									if ( $legend.length !== 0 && $fieldset.find( "input[name='" + $element.attr( "name" ) + "']" ) !== 1 ) {
+										var $strong = $legend.find( "strong.error" ),
+											id = $legend.attr( "id" );
+
+										if ( $strong.length > 0 ) {
+											$strong.remove();
+										}
+
+										if ( !id ) {
+											id = "required-group-" + idCount;
+											idCount += 1;
+
+											$legend.attr( "id", id );
+										}
+
+										$error.data( "element-id", id );
+										$error.attr( "id", id );
+										$error.appendTo( $legend );
+
+										return;
+									}
+								}
+							}
+
 							$error.appendTo( $form.find( "label[for='" + $element.attr( "id" ) + "']" ) );
 							return;
 						},
@@ -163,12 +196,11 @@ var componentName = "wb-frmvld",
 							this.defaultShowErrors();
 							var $errors = $form.find( "strong.error" ).filter( ":not(:hidden)" ),
 								$errorfields = $form.find( "input.error, select.error, textarea.error" ),
-								$summaryContainer = $form.find( "#" + errorFormId ),
 								prefixStart = "<span class='prefix'>" + i18nText.error + "&#160;",
 								prefixEnd = i18nText.colon + " </span>",
 								separator = i18nText.hyphen,
 								ariaLive = $form.parent().find( ".arialive" )[ 0 ],
-								summary, key, i, len, $error, prefix, $fieldName, $fieldset, label, labelString;
+								$summaryContainer, summary, key, i, len, $error, prefix, $fieldName, $fieldset, label, labelString;
 
 							// Correct the colouring of fields that are no longer invalid
 							$form
@@ -240,6 +272,7 @@ var componentName = "wb-frmvld",
 
 								// Delay updating the summary container in case a summary link was clicked
 								setTimeout( function() {
+									$summaryContainer = $form.find( "#" + errorFormId );
 
 									// Output our error summary and place it in the error container
 									// Create our container if one doesn't already exist
@@ -263,14 +296,26 @@ var componentName = "wb-frmvld",
 								if ( ariaLive.innerHTML.length !== 0 ) {
 									ariaLive.innerHTML = "";
 								}
-								$summaryContainer.detach();
+								$form.find( "#" + errorFormId ).detach();
 							}
 
 						}, /* End of showErrors() */
+
 						invalidHandler: function() {
 							submitted = true;
+						},
+
+						/* adds on tab validation */
+						onfocusout: function( element ) {
+							this.element( element );
 						}
+
 					} ); /* end of validate() */
+
+					/* fixes validation issue (see PR #7913) */
+					$form.on( "change", "input[type=date], input[type=file], select", function() {
+						$form.validate().element( this );
+					} );
 
 					// Clear the form and remove error messages on reset
 					$document.on( "click vclick touchstart", selector + " input[type=reset]", function( event ) {

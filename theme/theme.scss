@@ -10,16 +10,12 @@
 @import "variables";
 @import "defaults";
 
-/*
- * GLYPHICONS Halflings for Twitter Bootstrap by GLYPHICONS.com | Licensed under http://www.apache.org/licenses/LICENSE-2.0
- */
 @import "../src/base/bootstrap";
 
 /* WET Core */
 @import "../src/base/wet-boew";
 
 @import "banner/base";
-@import "breadcrumb/base";
 @import "footer/base";
 @import "language-bar/base";
 @import "main/base";
@@ -33,6 +29,7 @@
  */
 /* All screen views */
 @media screen {
+	@import "search/screen";
 	@import "views/screen";
 }
 

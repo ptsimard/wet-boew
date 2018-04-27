@@ -7,15 +7,32 @@
  *	Link colour and decoration
  */
 
+%no-decoration {
+	text-decoration: none;
+}
+
 a {
 	text-decoration: underline;		// re-enable underlining
 
 	&.btn {
-		text-decoration: none;		// except for buttons
+		@extend %no-decoration;	// except for buttons
 	}
 
 	&:visited {
 		color: $link-visited-color;
+	}
+
+	// make placeholder links look like plain text
+	&:not([href]) {
+		color: inherit;
+		text-decoration: none;
+
+		&:hover,
+		&:focus {
+			color: inherit;
+			outline: none;
+			text-decoration: none;
+		}
 	}
 }
 
@@ -45,8 +62,31 @@ a {
 }
 
 .dl-horizontal {
-	dt {
-		white-space: normal;
+	@media (min-width: $screen-sm-min) {
+		&.brdr-0 { // removes bordered for dl-horizontal
+			dt,
+			dd {
+				border: 0 !important;
+			}
+		}
+
+		dt {
+			border-top: 1px solid $clrMedium;
+			padding: 10px 10px 10px 0;
+			text-align: left;
+			white-space: normal;
+		}
+
+		dd {
+			border-top: 1px solid $clrMedium;
+			margin-bottom: 3px;
+			margin-left: 160px;
+			padding: 10px 10px 10px 0;
+		}
+
+		dt + dd {
+			padding-bottom: 0;
+		}
 	}
 }
 
@@ -75,6 +115,10 @@ a {
 				}
 			}
 		}
+	}
+
+	a {
+		@extend %no-decoration;
 	}
 }
 
@@ -497,40 +541,6 @@ input {
 	}
 }
 
-/**
- *	Disable pull-right/left on grid columns that do not match the current
- *	breakpoint
- */
-@media (max-width: $screen-xs-max) {
-	.pull-left,
-	.pull-right {
-		&[class*=col-sm],
-		&[class*=col-md],
-		&[class*=col-lg] {
-			float: none !important;
-		}
-	}
-}
-
-@media (min-width: $screen-sm-min) and (max-width: $screen-sm-max) {
-	.pull-left,
-	.pull-right {
-		&[class*=col-md],
-		&[class*=col-lg] {
-			float: none !important;
-		}
-	}
-}
-
-@media (min-width: $screen-md-min) and (max-width: $screen-md-max) {
-	.pull-left,
-	.pull-right {
-		&[class*=col-lg] {
-			float: none !important;
-		}
-	}
-}
-
 /*
  *	Blockquote font size
  */
@@ -564,6 +574,10 @@ legend {
 	float: left;
 }
 
+%border-style-solid {
+	border-style: solid;
+}
+
 fieldset {
 	border-top: 1px solid $legend-border-color;
 	padding-top: 10px;
@@ -571,12 +585,48 @@ fieldset {
 	&:first-child {
 		border-top: 0;
 	}
+
+	&[disabled] {
+		.btn {
+			@extend %border-style-solid;
+		}
+	}
+
+	/*
+	 *  Allows fieldSet/legend to have a bottom border under legend title
+	 *	https://github.com/wet-boew/wet-boew/issues/7766
+	 */
+	&.legend-brdr-bttm {
+		border-top: 0;
+
+		legend {
+			border-bottom: 1px solid $legend-border-color;
+			float: none;
+			margin-bottom: 10px;
+		}
+	}
+
+	/*
+	 *	Fieldset/legend as a label for a group of checkboxes or radio buttons
+	 *	https://github.com/wet-boew/wet-boew/issues/5797
+	 */
+	&.chkbxrdio-grp {
+		border-top: 0;
+		padding-top: 0;
+
+		legend {
+			font-size: $font-size-base;
+			font-weight: bold;
+			margin-bottom: 5px;
+		}
+	}
 }
 
 /*
  *	Pagination
  *	  * Add left/right arrows to previous/next buttons
  *	  * Increase size of the pagination buttons
+ *	  * Prevent contrast ratio issues on active placeholder links
  */
 %glyphicon-inline-icons {
 	content: " ";
@@ -584,19 +634,19 @@ fieldset {
 	font-weight: 400;
 	line-height: 1em;
 	position: relative;
-	top: 0.1em;
+	top: .1em;
 }
 
 %pagination-left-arrow {
 	@extend %glyphicon-inline-icons;
 	content: "\e091";
-	margin-right: 0.5em;
+	margin-right: .5em;
 }
 
 %pagination-right-arrow {
 	@extend %glyphicon-inline-icons;
 	content: "\e092";
-	margin-left: 0.5em;
+	margin-left: .5em;
 }
 
 .pagination,
@@ -610,7 +660,7 @@ fieldset {
 			a {
 				cursor: pointer;
 				display: inline-block;
-				margin-bottom: 0.5em;
+				margin-bottom: .5em;
 				padding: $padding-large-vertical $padding-large-horizontal;
 			}
 		}
@@ -676,6 +726,14 @@ fieldset {
 	}
 }
 
+.pagination {
+	> {
+		.active {
+			color: $pagination-active-color;
+		}
+	}
+}
+
 
 /*
  *	Use button border style 'outset' to give buttons depth, except when disabled
@@ -693,12 +751,19 @@ fieldset {
 	white-space: normal;
 
 	&.disabled,
-	&[disabled],
-	fieldset[disabled] & {
-		border-style: solid;
+	&[disabled] {
+		@extend %border-style-solid;
 	}
 }
 
+
+/*
+ * btn-xs should be equal to btn-sm in >v4.0.*
+*/
+.btn-group-xs .btn,
+.btn.btn-xs {
+	min-height: 0;
+}
 
 /*
  *  Right-to-left support
@@ -728,11 +793,11 @@ fieldset {
 
 			> {
 				* {
-					margin-right: 0.7em;
+					margin-right: .7em;
 				}
 
 				:first-child {
-					margin-right: 0.4em;
+					margin-right: .4em;
 				}
 			}
 		}

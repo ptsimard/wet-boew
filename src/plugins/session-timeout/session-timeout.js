@@ -36,7 +36,12 @@ var $modal, $modalLink, countdownInterval, i18n, i18nText,
 		refreshCallbackUrl: null,	/* refresh callback if using AJAX keepalive (no default) */
 		logouturl: "./",			/* logout URL once the session has expired */
 		refreshOnClick: true,		/* refresh session if user clicks on the page */
-		refreshLimit: 200000		/* default period of 2 minutes (ajax calls happen only once during this period) */
+		refreshLimit: 120000,		/* default period of 2 minutes (ajax calls happen only once during this period) */
+		method: "POST",				/* the request method to use */
+		additionalData: null,		/* additional data to send with the request */
+		refreshCallback: function( response ) {	/* callback function used to check the server response */
+			return response.replace( /\s/g, "" ) === "true";
+		}
 	},
 
 	/**
@@ -124,8 +129,8 @@ var $modal, $modalLink, countdownInterval, i18n, i18nText,
 			child, modal, temp;
 
 		if ( $document.find( modalID ).length === 0 ) {
-				modal = document.createDocumentFragment(),
-				temp = document.createElement( "div" );
+			modal = document.createDocumentFragment();
+			temp = document.createElement( "div" );
 
 			// Create the modal dialog.  A temp <div> element is used so that its innerHTML can be set as a string.
 			temp.innerHTML = "<a class='wb-lbx lbx-modal mfp-hide' href='#" + componentName + "-modal'></a>" +
@@ -136,7 +141,7 @@ var $modal, $modalLink, countdownInterval, i18n, i18nText,
 				"</section>";
 
 			// Get the temporary <div>'s top level children and append to the fragment
-			while ( child = temp.firstChild ) {
+			while ( ( child = temp.firstChild ) !== null ) {
 				modal.appendChild( child );
 			}
 			document.body.appendChild( modal );
@@ -175,8 +180,8 @@ var $modal, $modalLink, countdownInterval, i18n, i18nText,
 						$elm
 							.trigger( resetEvent, settings )
 							.trigger( keepaliveEvent, settings );
+						$elm.data( "lastActivity", currentTime );
 					}
-					$elm.data( "lastActivity", currentTime );
 				}
 			} );
 		}
@@ -191,25 +196,31 @@ var $modal, $modalLink, countdownInterval, i18n, i18nText,
 	keepalive = function( event, settings ) {
 		var $elm = $( event.target );
 		if ( settings.refreshCallbackUrl !== null ) {
-			$.post( settings.refreshCallbackUrl, function( response ) {
+			$.ajax( {
+				url: settings.refreshCallbackUrl,
+				data: settings.additionalData,
+				dataType: "text",
+				method: settings.method,
+				success: function( response ) {
 
-				// Session is valid
-				if ( response && response.replace( /\s/g, "" ) === "true" ) {
-					$elm.trigger( resetEvent, settings );
+					// Session is valid
+					if ( response && settings.refreshCallback( response ) ) {
+						$elm.trigger( resetEvent, settings );
 
-				// Session has timed out - let the user know they need to sign in again
-				} else {
+					// Session has timed out - let the user know they need to sign in again
+					} else {
 
-					// End the inactivity timeouts since the session is already kaput
-					clearTimeout( $elm.data( inactivityEvent ) );
-					clearTimeout( $elm.data( keepaliveEvent ) );
+						// End the inactivity timeouts since the session is already kaput
+						clearTimeout( $elm.data( inactivityEvent ) );
+						clearTimeout( $elm.data( keepaliveEvent ) );
 
-					openModal( {
-						body: "<p>" + i18nText.timeoutAlready + "</p>",
-						buttons: $( "<button type='button' class='" + confirmClass +
-							" btn btn-primary'>" + i18nText.buttonSignin + "</button>" )
-								.data( "logouturl", settings.logouturl )
-					} );
+						openModal( {
+							body: "<p>" + i18nText.timeoutAlready + "</p>",
+							buttons: $( "<button type='button' class='" + confirmClass +
+								" btn btn-primary popup-modal-dismiss'>" + i18nText.buttonSignin + "</button>" )
+									.data( "logouturl", settings.logouturl )
+						} );
+					}
 				}
 			} );
 		}
@@ -234,7 +245,7 @@ var $modal, $modalLink, countdownInterval, i18n, i18nText,
 		clearTimeout( $( event.target ).data( keepaliveEvent ) );
 
 		$buttonContinue = $( buttonStart + confirmClass +
-			" btn btn-primary'>" + i18nText.buttonContinue + buttonEnd )
+			" btn btn-primary popup-modal-dismiss'>" + i18nText.buttonContinue + buttonEnd )
 				.data( settings )
 				.data( "start", getCurrentTime() );
 		$buttonEnd = $( buttonStart + confirmClass + " btn btn-default'>" +
@@ -351,7 +362,7 @@ var $modal, $modalLink, countdownInterval, i18n, i18nText,
 				ks: 1000000
 			};
 
-		if ( value == null ) {
+		if ( value == null ) { //eslint-disable-line no-eq-null
 			return null;
 		}
 
@@ -373,7 +384,7 @@ var $modal, $modalLink, countdownInterval, i18n, i18nText,
 	getTime = function( milliseconds ) {
 		var time = { minutes: "", seconds: "" };
 
-		if ( milliseconds != null ) {
+		if ( milliseconds != null ) { //eslint-disable-line no-eq-null
 			time.minutes = parseInt( ( milliseconds / ( 1000 * 60 ) ) % 60, 10 );
 			time.seconds = parseInt( ( milliseconds / 1000 ) % 60, 10 );
 		}
@@ -408,7 +419,7 @@ var $modal, $modalLink, countdownInterval, i18n, i18nText,
 
 // Bind the plugin events
 $document.on( "timerpoke.wb " + initEvent + " " + keepaliveEvent + " " +
-	inactivityEvent + " " + resetEvent, selector, function( event, settings ) {
+inactivityEvent + " " + resetEvent, selector, function( event, settings ) {
 
 	var eventType = event.type;
 

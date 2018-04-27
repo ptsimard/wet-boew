@@ -5,7 +5,9 @@
 
 summary {
 	// Make sure summary remains visible
-	display: block !important;
+	display: list-item !important;
+	list-style-type: none; // Prevent list bullets from appearing in browsers that lack native details/summary support (e.g. IE/Edge)
+	list-style-type: disclosure-closed; // Show summary arrows in Firefox 49.0+ and future versions of Blink/Webkit
 	visibility: visible !important;
 }
 
@@ -18,6 +20,38 @@ summary {
 }
 
 details {
+	margin-bottom: .25em;
+
+	summary {
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		color: #295376;
+		padding: 5px 15px;
+
+		&:focus,
+		&:hover {
+			background-color: transparent;
+			color: #0535d2;
+			text-decoration: underline;
+		}
+	}
+
+	&[open] {
+		border: 1px solid #ddd;
+		border-radius: 4px;
+
+		> {
+			summary {
+				border: 0;
+				border-bottom: 1px solid #ddd;
+				border-bottom-left-radius: 0;
+				border-bottom-right-radius: 0;
+				list-style-type: disclosure-open;
+				margin-bottom: .25em;
+			}
+		}
+	}
+
 	// Prevent FOUC
 	&:not([open]) {
 		@extend %details-nested-in-hidden-details;
@@ -59,7 +93,7 @@ details {
 		visibility: visible !important;
 
 		> {
-			* {
+			*:not(summary) {
 				display: block !important;
 			}
 		}

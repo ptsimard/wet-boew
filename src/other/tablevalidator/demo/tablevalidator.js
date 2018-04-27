@@ -10,101 +10,100 @@
  */
 /*global jQuery: false, alert: false */
 ( function( $, wb ) {
-	"use strict";
+"use strict";
 
-	var componentName = "wb-tblvalidator",
-		selector = "." + componentName,
-		tableParserSelector = ".wb-tableparser",
-		tableParsingEvent = "passiveparse" + tableParserSelector,
-		tableParsingCompleteEvent = "parsecomplete" + tableParserSelector,
-		$document = wb.doc,
-		addidheadersEvent = "idsheaders" + selector,
-		addscopeEvent = "scope" + selector,
-		addnothingEvent = "simple" + selector,
-		showHTMLEvent = "showhtml" + selector,
-		logEvent = "log" + selector,
-		formSelector = "#formtablevalidator",
-		ErrorMessage = {
-				"%tblparser1":  "Only table can be parsed with this parser",
-				"%tblparser2":  "The table was already parsed.",
-				"%tblparser3":  "The first colgroup must be spanned to represent the header column group",
-				"%tblparser3Tech": 6,
-				"%tblparser4":  " You have an invalid cell inside a row description",
-				"%tblparser4Tech": 4,
-				"%tblparser5":  "You need at least one data colgroup, review your table structure",
-				"%tblparser5Tech": 8,
-				"%tblparser6":  "The Lowest column group level have been found, You may have an error in you column structure",
-				"%tblparser6Tech": 9,
-				"%tblparser7":  "The initial colgroup should group all the header, there are no place for any data cell",
-				"%tblparser7Tech": 4,
-				"%tblparser9":  "Error in you header row group, there are cell that are crossing more than one colgroup",
-				"%tblparser9Tech": 4,
-				"%tblparser10":  "The header group cell used to represent the data at level must encapsulate his group",
-				"%tblparser10Tech": 7,
-				"%tblparser12":  "Last summary row group already found",
-				"%tblparser12Tech": 3,
-				"%tblparser13":  "Error, Row group not calculated",
-				"%tblparser14":  "You can not have a summary at level under 0, add a group header or merge a tbody togheter",
-				"%tblparser14Tech": 3,
-				"%tblparser15":  "tr element need to only have th or td element as his child",
-				"%tblparser16":  "The row do not have a good width",
-				"%tblparser16Tech": 12,
-				"%tblparser17":  "The layout cell is not empty",
-				"%tblparser17Tech": 11,
-				"%tblparser18":  "Row group header not well structured.",
-				"%tblparser18Tech": 7,
-				"%tblparser21":  "Move the row used as the column cell heading in the thead row group",
-				"%tblparser21Tech": 7,
-				"%tblparser23":  "Avoid the use of have paralel row headers, it's recommended do a cell merge to fix it",
-				"%tblparser23Tech": 3,
-				"%tblparser24":  "For a data row, the heading hiearchy need to be the Generic to the specific",
-				"%tblparser24Tech": 3,
-				"%tblparser25":  "You have a problematic key cell",
-				"%tblparser25Tech": 0,
-				"%tblparser26":  "You can not define any row before the thead group",
-				"%tblparser26Tech": 12,
-				"%tblparser27":  "thead element need to only have tr element as his child",
-				"%tblparser27Tech": 12,
-				"%tblparser29":  "You cannot span cell in 2 different rowgroup",
-				"%tblparser29Tech": 12,
-				"%tblparser30":  "Use the appropriate table markup",
-				"%tblparser30Tech": 12,
-				"%tblparser31":  "Internal Error, Number of virtual column must be set [ function processColgroup( ) ]",
-				"%tblparser32":  "Check your row cell headers structure",
-				"%tblparser32Tech": 3,
-				"%tblparser34":  "Mark properly your data row group.",
-				"%tblparser34Tech": 1,
-				"%tblparser35":  "Column, col element, are not correctly defined",
-				"%tblparser35Tech": 12 },
-		techniqueURL = [
-				"keycell-techniques.html", /* 1 */
-				"rowgrouping-techniques.html", /* 2 */
-				"summariesrowgroup-techniques.html", /* 3 */
-				"headerrowgroupstructure-techniques.html", /* 4 */
-				"rowheader-description-techniques.html", /* 5 */
-				"rowgroupheader-description-techniques.html", /* 6 */
-				"colgroupheader-techniques.html", /* 7 */
-				"headercolgroupstructure-techniques.html", /* 8 */
-				"datacolgroup-techniques.html", /* 9 */
-				"colgroupsummary-techniques.html", /* 10 */
-				"colheader-description-techniques.html", /* 11 */
-				"layoutcell-techniques.html", /* 12 */
-				"http:/*www.w3.org/TR/html5/spec.html" ], /* 13 */
-			techniqueName = [
-				"Defining a Key Cell", /* 1 */
-				"Defining a Data Row Group in a Data Table", /* 2 */
-				"Summaries a Data Row Group in a Data Table", /* 3 */
-				"Structuring the Header Row in a Data Table", /* 4 */
-				"Describing a Row Header Cell in a Data Table", /* 5 */
-				"Describing a Row Group Header Cell in a Data Table", /* 6 */
-				"Defining Column Group Header in a Data Table", /* 7 */
-				"Structuring the Header Column Cell in a Data Table", /* 8 */
-				"Defining a Data Column Group in a Data Table", /* 9 */
-				"Summaries a Data Column Group in a Data Table", /* 10 */
-				"Describing a Column Header Cell in a Data Table", /* 11 */
-				"Defining a Layout Cell in a Data Table", /* 12 */
-				"HTML5 Specification" ] /* 13 */
-		;
+var componentName = "wb-tblvalidator",
+	selector = "." + componentName,
+	tableParserSelector = ".wb-tableparser",
+	tableParsingEvent = "passiveparse" + tableParserSelector,
+	tableParsingCompleteEvent = "parsecomplete" + tableParserSelector,
+	$document = wb.doc,
+	addidheadersEvent = "idsheaders" + selector,
+	addscopeEvent = "scope" + selector,
+	addnothingEvent = "simple" + selector,
+	showHTMLEvent = "showhtml" + selector,
+	logEvent = "log" + selector,
+	formSelector = "#formtablevalidator",
+	ErrorMessage = {
+		"%tblparser1": "Only table can be parsed with this parser",
+		"%tblparser2": "The table was already parsed.",
+		"%tblparser3": "The first colgroup must be spanned to represent the header column group",
+		"%tblparser3Tech": 6,
+		"%tblparser4": " You have an invalid cell inside a row description",
+		"%tblparser4Tech": 4,
+		"%tblparser5": "You need at least one data colgroup, review your table structure",
+		"%tblparser5Tech": 8,
+		"%tblparser6": "The Lowest column group level have been found, You may have an error in you column structure",
+		"%tblparser6Tech": 9,
+		"%tblparser7": "The initial colgroup should group all the header, there are no place for any data cell",
+		"%tblparser7Tech": 4,
+		"%tblparser9": "Error in you header row group, there are cell that are crossing more than one colgroup",
+		"%tblparser9Tech": 4,
+		"%tblparser10": "The header group cell used to represent the data at level must encapsulate his group",
+		"%tblparser10Tech": 7,
+		"%tblparser12": "Last summary row group already found",
+		"%tblparser12Tech": 3,
+		"%tblparser13": "Error, Row group not calculated",
+		"%tblparser14": "You can not have a summary at level under 0, add a group header or merge a tbody togheter",
+		"%tblparser14Tech": 3,
+		"%tblparser15": "tr element need to only have th or td element as his child",
+		"%tblparser16": "The row do not have a good width",
+		"%tblparser16Tech": 12,
+		"%tblparser17": "The layout cell is not empty",
+		"%tblparser17Tech": 11,
+		"%tblparser18": "Row group header not well structured.",
+		"%tblparser18Tech": 7,
+		"%tblparser21": "Move the row used as the column cell heading in the thead row group",
+		"%tblparser21Tech": 7,
+		"%tblparser23": "Avoid the use of have paralel row headers, it's recommended do a cell merge to fix it",
+		"%tblparser23Tech": 3,
+		"%tblparser24": "For a data row, the heading hiearchy need to be the Generic to the specific",
+		"%tblparser24Tech": 3,
+		"%tblparser25": "You have a problematic key cell",
+		"%tblparser25Tech": 0,
+		"%tblparser26": "You can not define any row before the thead group",
+		"%tblparser26Tech": 12,
+		"%tblparser27": "thead element need to only have tr element as his child",
+		"%tblparser27Tech": 12,
+		"%tblparser29": "You cannot span cell in 2 different rowgroup",
+		"%tblparser29Tech": 12,
+		"%tblparser30": "Use the appropriate table markup",
+		"%tblparser30Tech": 12,
+		"%tblparser31": "Internal Error, Number of virtual column must be set [ function processColgroup( ) ]",
+		"%tblparser32": "Check your row cell headers structure",
+		"%tblparser32Tech": 3,
+		"%tblparser34": "Mark properly your data row group.",
+		"%tblparser34Tech": 1,
+		"%tblparser35": "Column, col element, are not correctly defined",
+		"%tblparser35Tech": 12 },
+	techniqueURL = [
+		"keycell-techniques.html", /* 1 */
+		"rowgrouping-techniques.html", /* 2 */
+		"summariesrowgroup-techniques.html", /* 3 */
+		"headerrowgroupstructure-techniques.html", /* 4 */
+		"rowheader-description-techniques.html", /* 5 */
+		"rowgroupheader-description-techniques.html", /* 6 */
+		"colgroupheader-techniques.html", /* 7 */
+		"headercolgroupstructure-techniques.html", /* 8 */
+		"datacolgroup-techniques.html", /* 9 */
+		"colgroupsummary-techniques.html", /* 10 */
+		"colheader-description-techniques.html", /* 11 */
+		"layoutcell-techniques.html", /* 12 */
+		"http:/*www.w3.org/TR/html5/spec.html" ], /* 13 */
+	techniqueName = [
+		"Defining a Key Cell", /* 1 */
+		"Defining a Data Row Group in a Data Table", /* 2 */
+		"Summaries a Data Row Group in a Data Table", /* 3 */
+		"Structuring the Header Row in a Data Table", /* 4 */
+		"Describing a Row Header Cell in a Data Table", /* 5 */
+		"Describing a Row Group Header Cell in a Data Table", /* 6 */
+		"Defining Column Group Header in a Data Table", /* 7 */
+		"Structuring the Header Column Cell in a Data Table", /* 8 */
+		"Defining a Data Column Group in a Data Table", /* 9 */
+		"Summaries a Data Column Group in a Data Table", /* 10 */
+		"Describing a Column Header Cell in a Data Table", /* 11 */
+		"Defining a Layout Cell in a Data Table", /* 12 */
+		"HTML5 Specification" ]; /* 13 */
 
 // Prevent any form to submit
 $document.on( "submit", formSelector, function( ) {
@@ -126,18 +125,17 @@ $document.on( showHTMLEvent, "#visualoutput > table:eq( 0 )", function( event ) 
 	tableHTMLstring = ( "<table>" + $elm.html( ) + "</table>" ).replace( /<col>/g, "<col />" ).replace( /<br>/g, "<br />" ).replace( /&/g, "&amp;" ).replace( /</g, "&lt;" ).replace( />/g, "&gt;" ).replace( /"/g, "&quot;" );
 
 	// Show the result
-	$output.html( "<pre class='prettyprint'><code>" + tableHTMLstring  + "</code></pre>" );
+	$output.html( "<pre class='prettyprint'><code>" + tableHTMLstring + "</code></pre>" );
 
 	if ( typeof window.prettyPrint === "function" ) {
 		window.prettyPrint( );
 	}
 
 	$( formSelector ).trigger( {
-			type: logEvent,
-			logtype: "Information",
-			logmessage: "Result Displayed"
-		}
-	);
+		type: logEvent,
+		logtype: "Information",
+		logmessage: "Result Displayed"
+	} );
 } );
 
 // Check the minimum accessibility requirement
@@ -176,11 +174,10 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 	}
 
 	$( formSelector ).trigger( {
-			type: logEvent,
-			logtype: "Information",
-			logmessage: "Accessibility Strategy: Ids/Headers"
-		}
-	);
+		type: logEvent,
+		logtype: "Information",
+		logmessage: "Accessibility Strategy: Ids/Headers"
+	} );
 
 	$elm = $( elm );
 	tblparser = $elm.data( ).tblparser;
@@ -204,8 +201,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 				// If there no id, add an uid
 				currCellId = $( currCell.elem ).attr( "id" );
 				if ( currCellId === undefined || currCellId === "" || resetIds ) {
-
-					// currCellId = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 					currCellId = idPrefix + currCell.uid; /* Generate a new ID */
 					$( currCell.elem ).attr( "id", currCellId );
 				}
@@ -231,8 +226,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 					}
 					currCellDescId = $( currCell.descCell.elem ).attr( "id" );
 					if ( currCellDescId === undefined || currCellDescId === "" || resetIds ) {
-
-						// currCellDescId = idPrefix + new Date( ).getTime( ) + currCell.descCell.uid; // Generate a new ID
 						$( currCell.descCell.elem ).attr( "id", currCellDescId );
 					}
 					$( currCell.elem ).attr( "aria-describedby", currCellDescId );
@@ -254,8 +247,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 			for ( j = 0; j < currRow.headerset.length; j += 1 ) {
 				currCellId = $( currRow.headerset[ j ].elem ).attr( "id" );
 				if ( currCellId === undefined || currCellId === "" || resetIds ) {
-
-					// currCellId = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 					currCellId = idPrefix + currRow.headerset[ j ].uid; /* Generate a new ID */
 					$( currRow.headerset[ j ].elem ).attr( "id", currCellId );
 				}
@@ -268,8 +259,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 			for ( j = 0; j < currRow.header.length; j += 1 ) {
 				currCellId = $( currRow.header[ j ].elem ).attr( "id" );
 				if ( currCellId === undefined || currCellId === "" || resetIds ) {
-
-					// currCellId = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 					currCellId = idPrefix + currRow.header[ j ].uid; /* Generate a new ID */
 					$( currRow.header[ j ].elem ).attr( "id", currCellId );
 				}
@@ -291,8 +280,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 						for ( m = 0; m < currCol.headerLevel.length; m += 1 ) {
 							currCellId = $( currCol.headerLevel[ m ].elem ).attr( "id" );
 							if ( currCellId === undefined || currCellId === "" || resetIds ) {
-
-								// currCellId = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 								currCellId = idPrefix + currCol.headerLevel[ m ].uid; /* Generate a new ID */
 								$( currCol.headerLevel[ m ].elem ).attr( "id", currCellId );
 							}
@@ -303,8 +290,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 						for ( m = 0; m < currCol.header.length; m += 1 ) {
 							currCellId = $( currCol.header[ m ].elem ).attr( "id" );
 							if ( currCellId === undefined || currCellId === "" || resetIds ) {
-
-								// currCellId = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 								currCellId = idPrefix + currCol.header[ m ].uid; /* Generate a new ID */
 								$( currCol.header[ m ].elem ).attr( "id", currCellId );
 							}
@@ -316,6 +301,7 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 
 				if ( currCell.col && currCell.col.dataheaders ) {
 					coldataheader = currCell.col.dataheaders;
+
 					/*
 					for ( var x = 0; x < currCell.col.dataheader.length; x += 1 ) {
 						coldataheader = ( coldataheader ? " ": "" );
@@ -338,8 +324,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 
 					currCellId5 = $( currCell.elem ).attr( "id" );
 					if ( currCellId5 === undefined || currCellId5 === "" || resetIds ) {
-
-						// currCellId5 = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 						currCellId5 = idPrefix + currCell.uid; /* Generate a new ID */
 						$( currCell.elem ).attr( "id", currCellId5 );
 					}
@@ -356,8 +340,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 						for ( m = 0; m < currCell.addcolheaders.length; m += 1 ) {
 							currCellId = $( currCell.addcolheaders[ m ].elem ).attr( "id" );
 							if ( currCellId === undefined || currCellId === "" || resetIds ) {
-
-								// currCellId = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 								currCellId = idPrefix + currCell.addcolheaders[ m ].uid; /* Generate a new ID */
 								$( currCell.addcolheaders[ m ].elem ).attr( "id", currCellId );
 							}
@@ -369,8 +351,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 						for ( m = 0; m < currCell.addrowheaders.length; m += 1 ) {
 							currCellId = $( currCell.addrowheaders[ m ].elem ).attr( "id" );
 							if ( currCellId === undefined || currCellId === "" || resetIds ) {
-
-								// currCellId = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 								currCellId = idPrefix + currCell.addrowheaders[ m ].uid; /* Generate a new ID */
 								$( currCell.addrowheaders[ m ].elem ).attr( "id", currCellId );
 							}
@@ -391,8 +371,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 						for ( m = 0; m < currCell.describe.length; m += 1 ) {
 							currCellId = $( currCell.describe[ m ].elem ).attr( "id" );
 							if ( currCellId === undefined || currCellId === "" || resetIds ) {
-
-								// currCellId = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 								currCellId = idPrefix + currCell.describe[ m ].uid; /* Generate a new ID */
 								$( currCell.describe[ m ].elem ).attr( "id", currCellId );
 							}
@@ -400,8 +378,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 							if ( currCell.type === 5 && !$( currCell.describe[ m ].elem ).attr( "aria-describedby" ) ) {
 								currCellId = $( currCell.elem ).attr( "id" );
 								if ( currCellId === undefined || currCellId === "" || resetIds ) {
-
-									// currCellId = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 									currCellId = idPrefix + currCell.uid; /* Generate a new ID */
 									$( currCell.elem ).attr( "id", currCellId );
 								}
@@ -439,8 +415,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 					// Set the aria-describedby
 					currDescCellId = $( tblparser.lstrowgroup[ i ].headerlevel[ j ].descCell.elem ).attr( "id" );
 					if ( currDescCellId === undefined || currDescCellId === "" || resetIds ) {
-
-						// currCellId = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 						currDescCellId = idPrefix + tblparser.lstrowgroup[ i ].headerlevel[ j ].descCell.uid; /* Generate a new ID */
 						$( tblparser.lstrowgroup[ i ].headerlevel[ j ].descCell.elem ).attr( "id", currDescCellId );
 					}
@@ -449,8 +423,6 @@ $document.on( addidheadersEvent, "#visualoutput > table:eq( 0 )", function( even
 					// Set the headers
 					currCellId = $( tblparser.lstrowgroup[ i ].headerlevel[ j ].elem ).attr( "id" );
 					if ( currCellId === undefined || currCellId === "" || resetIds ) {
-
-						// currCellId = idPrefix + new Date( ).getTime( ) + currCell.uid; // Generate a new ID
 						currCellId = idPrefix + tblparser.lstrowgroup[ i ].headerlevel[ j ].uid; /* Generate a new ID */
 						$( tblparser.lstrowgroup[ i ].headerlevel[ j ].elem ).attr( "id", currCellId );
 					}
@@ -526,11 +498,10 @@ $document.on( addscopeEvent, "#visualoutput > table:eq( 0 )", function( event ) 
 	}
 
 	$( formSelector ).trigger( {
-			type: logEvent,
-			logtype: "Information",
-			logmessage: "Accessibility Strategy: Scope"
-		}
-	);
+		type: logEvent,
+		logtype: "Information",
+		logmessage: "Accessibility Strategy: Scope"
+	} );
 
 	$elm = $( elm );
 	tblparser = $elm.data( ).tblparser;
@@ -577,11 +548,10 @@ $document.on( addnothingEvent, "#visualoutput > table:eq( 0 )", function( event 
 	}
 
 	$( formSelector ).trigger( {
-			type: logEvent,
-			logtype: "Information",
-			logmessage: "Accessibility Strategy: Nothing"
-		}
-	);
+		type: logEvent,
+		logtype: "Information",
+		logmessage: "Accessibility Strategy: Nothing"
+	} );
 
 	$elm = $( elm );
 
@@ -679,47 +649,45 @@ $document.on( "error" + tableParserSelector, "#visualoutput > table:eq( 0 )", fu
 		errorHTML = "",
 		techNum;
 
-	errorHTML = ErrorMessage[  "%tblparser" + numerr  ];
+	errorHTML = ErrorMessage[ "%tblparser" + numerr ];
 
 	// Check if a technique exist related to the error
-	if ( ErrorMessage[  "%tblparser" + numerr + "Tech"  ] !== undefined ) {
-		techNum = ErrorMessage[  "%tblparser" + numerr + "Tech"  ];
-		errorHTML = "<a href='" + techniqueURL[  techNum  ] + "' title='" + techniqueName[  techNum  ] + "'>" + errorHTML + "</a>";
+	if ( ErrorMessage[ "%tblparser" + numerr + "Tech" ] !== undefined ) {
+		techNum = ErrorMessage[ "%tblparser" + numerr + "Tech" ];
+		errorHTML = "<a href='" + techniqueURL[ techNum ] + "' title='" + techniqueName[ techNum ] + "'>" + errorHTML + "</a>";
 	}
 
 	html = html + errorHTML;
 
 	$( formSelector ).trigger( {
-			type: logEvent,
-			logtype: "Error",
-			logmessage: html
-		}
-	);
+		type: logEvent,
+		logtype: "Error",
+		logmessage: html
+	} );
 } );
 
 // On warning detected in the table
 $document.on( "warning" + tableParserSelector, "#visualoutput > table:eq( 0 )", function( event ) {
 	var numerr = event.err,
-	html = "#" + numerr + ", ",
-	errorHTML = "",
-	techNum;
+		html = "#" + numerr + ", ",
+		errorHTML = "",
+		techNum;
 
-	errorHTML = ErrorMessage[  "%tblparser" + numerr  ];
+	errorHTML = ErrorMessage[ "%tblparser" + numerr ];
 
 	// Check if a technique exist related to the error
-	if ( ErrorMessage[  "%tblparser" + numerr + "Tech"  ] !== undefined ) {
-		techNum = ErrorMessage[  "%tblparser" + numerr + "Tech"  ];
-		errorHTML = "<a href='" + techniqueURL[  techNum  ] + "' title='" + techniqueName[  techNum  ] + "'>" + errorHTML + "</a>";
+	if ( ErrorMessage[ "%tblparser" + numerr + "Tech" ] !== undefined ) {
+		techNum = ErrorMessage[ "%tblparser" + numerr + "Tech" ];
+		errorHTML = "<a href='" + techniqueURL[ techNum ] + "' title='" + techniqueName[ techNum ] + "'>" + errorHTML + "</a>";
 	}
 
 	html = html + errorHTML;
 
 	$( formSelector ).trigger( {
-			type: logEvent,
-			logtype: "Warning",
-			logmessage: html
-		}
-	);
+		type: logEvent,
+		logtype: "Warning",
+		logmessage: html
+	} );
 } );
 
 // When the user validate the table in input
@@ -740,11 +708,10 @@ $document.on( "click", "#validatetable", function( ) {
 	if ( !$tbl.length ) {
 
 		$( formSelector ).trigger( {
-				type: logEvent,
-				logtype: "Error",
-				logmessage: "No HTML Table code provided in input"
-			}
-		);
+			type: logEvent,
+			logtype: "Error",
+			logmessage: "No HTML Table code provided in input"
+		} );
 
 		alert( "Please add HTML Table code" );
 		$( "#inputsourcecode" ).focus();

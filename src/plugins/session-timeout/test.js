@@ -29,9 +29,9 @@ describe( "Session Timeout test suite", function() {
 	 */
 	before( function( done ) {
 
-		// Spy on jQuery's trigger and post methods
+		// Spy on jQuery's trigger and ajax methods
 		spies.trigger = sandbox.spy( $.prototype, "trigger" );
-		spies.post = sandbox.spy( $, "post" );
+		spies.ajax = sandbox.spy( $, "ajax" );
 
 		callback = done;
 
@@ -75,7 +75,7 @@ describe( "Session Timeout test suite", function() {
 	describe( "init plugin", function() {
 		it( "should trigger reset.wb-sessto event", function() {
 			expect( spies.trigger.calledWith( "reset.wb-sessto" ) ).to.equal( true );
-		} ) ;
+		} );
 
 		it( "should have marked the element as initialized", function() {
 			expect( $session.hasClass( "wb-sessto-inited" ) ).to.equal( true );
@@ -129,8 +129,8 @@ describe( "Session Timeout test suite", function() {
 			expect( spies.trigger.calledWith( "reset.wb-sessto" ) ).to.equal( true );
 		} );
 
-		it( "has no refreshCallbackUrl so should not call $.post", function() {
-			expect( spies.post.called ).to.equal( false );
+		it( "has no refreshCallbackUrl so should not call $.ajax", function() {
+			expect( spies.ajax.called ).to.equal( false );
 		} );
 
 	} );
@@ -141,7 +141,7 @@ describe( "Session Timeout test suite", function() {
 
 			// Reset the state of the spies
 			spies.trigger.reset();
-			spies.post.reset();
+			spies.ajax.reset();
 		} );
 
 		it( "should trigger keepalive.wb-sessto on document click", function() {
@@ -154,8 +154,8 @@ describe( "Session Timeout test suite", function() {
 			expect( spies.trigger.calledWith( "reset.wb-sessto" ) ).to.equal( true );
 		} );
 
-		it( "has no refreshCallbackUrl so should not call $.post", function() {
-			expect( spies.post.called ).to.equal( false );
+		it( "has no refreshCallbackUrl so should not call $.ajax", function() {
+			expect( spies.ajax.called ).to.equal( false );
 		} );
 
 		it( "should not trigger keepalive.wb-sessto on document click (refresh limit prevents)", function() {
@@ -186,24 +186,23 @@ describe( "Session Timeout test suite", function() {
 
 			// Add the session timeout element and trigger it's init'
 			$session.data( "wet-boew", {
-					sessionalive: 5000,
-					refreshCallbackUrl: "foo.html"
-				} )
+				sessionalive: 5000,
+				refreshCallbackUrl: "foo.html"
+			} )
 				.removeClass( "wb-sessto-inited" )
 				.trigger( "wb-init.wb-sessto" );
 		} );
 
 		it( "should trigger keepalive.wb-sessto after 5000ms", function() {
 			spies.trigger.reset();
-			spies.post.reset();
+			spies.ajax.reset();
 
 			clock.tick( 5010 );
 			expect( spies.trigger.calledWith( "keepalive.wb-sessto" ) ).to.equal( true );
 		} );
 
-		it( "has refreshCallbackUrl so should call $.post", function() {
-			expect( spies.post.called ).to.equal( true );
-			expect( spies.post.calledWith( "foo.html" ) ).to.equal( true );
+		it( "has refreshCallbackUrl so should call $.ajax", function() {
+			expect( spies.ajax.called ).to.equal( true );
 		} );
 
 		it( "successful response triggers reset.wb-sessto event", function() {
